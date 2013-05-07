@@ -5,31 +5,38 @@ import (
 	"time"
 )
 
+const URL = "http://www.example.com/"
+
 type Agent struct {
-	Name, Url	string
-	Quit		chan bool
+	Name, Url string
+	Quit      chan bool
 }
 
 func NewAgent(name string, quit chan bool) *Agent {
-	return &Agent{name, "http://www.example.com/", quit}
+	return &Agent{name, URL, quit}
 }
 
-func (a *Agent) GenerateLoad() {
-	pullUrl("http://www.example.com/")
+func (agent *Agent) GenerateLoad() {
+	pullUrl(agent.Url)
 }
 
-func (a *Agent) Run(c chan bool) {
+func (agent *Agent) Run(c chan bool) {
+	fmt.Printf("Starting agent #%v ..\n", agent.Name)
 	c <- true
 	for {
 		select {
-			case <- a.Quit:
-				<- c
-				fmt.Printf("Stopping agent%v ...\n", a.Name)
-				return
-			default:
-				fmt.Printf("Running agent%v ...\n", a.Name)
-				a.GenerateLoad()
-				time.Sleep(3 * time.Second)
+		case <-agent.Quit:
+			fmt.Printf("Stopping agent #%v ..\n", agent.Name)
+			close(agent.Quit)
+			<-c
+			return
+		default:
+			agent.GenerateLoad()
+			time.Sleep(1 * time.Second)
 		}
 	}
+}
+
+func (agent *Agent) Interrupt(c chan bool) {
+	agent.Quit <- true
 }

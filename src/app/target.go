@@ -1,6 +1,7 @@
 package app
 
 import (
+	"./times"
 	"container/list"
 	"fmt"
 	"strconv"
@@ -8,39 +9,62 @@ import (
 )
 
 type Target struct {
-	Name			string
-	Agents			list.List
-	ActiveAgents	int
-	AgentChannel	chan bool
+	Name         string
+	Agents       list.List
+	AgentChannel chan bool
+	TS           times.TimeSeries
 }
 
-func NewTarget(name string, amountAgents int) *Target {	
-	agentChannel := make(chan bool, amountAgents)
+func NewTarget(name string, timeSeries times.TimeSeries) *Target {
 	agents := *list.New()
-	return &Target{name, agents, amountAgents, agentChannel}
-} 
+	channelSize := calcChannelSize(timeSeries.Elements)
+	agentChannel := make(chan bool, channelSize)
+	return &Target{name, agents, agentChannel, timeSeries}
+}
 
-func (t *Target) UpdateAgents() {
-	for {
-		currentAgents := len(t.AgentChannel)
-		switch {
-			case currentAgents < t.ActiveAgents:
-				newAgents := t.ActiveAgents - currentAgents
-				for i := 0; i < newAgents; i++ {
-					agent := NewAgent(strconv.Itoa(i), make(chan bool))
-					t.Agents.PushBack(agent)
-					go agent.Run(t.AgentChannel)
-				}
-			case currentAgents > t.ActiveAgents:
-				reduceAgents := currentAgents - t.ActiveAgents
-				for i := 0; i < reduceAgents; i++ {
-					agentElem := t.Agents.Back()
-					agent := agentElem.Value.(*Agent)
-					agent.Quit <- true
-					t.Agents.Remove(agentElem)
-				}
+func calcChannelSize(elements []*times.Element) int {
+	channelSize := 0
+	for i := 0; i < len(elements); i++ {
+		value := int(elements[i].Value)
+		if value > channelSize {
+			channelSize = value
 		}
-		time.Sleep(20 * time.Second)
-		fmt.Println(len(t.AgentChannel))
+	}
+	return channelSize
+}
+
+func (t *Target) RunTimeSeries() {
+	duration := len(t.TS.Elements)
+	for i := 0; i < duration; i++ {
+		runningAgents := len(t.AgentChannel)
+		runningNextAgents := int(t.TS.Elements[i].Value)
+		fmt.Printf("Update amount of agents to %v\n", runningNextAgents)
+		switch {
+		case runningAgents < runningNextAgents:
+			addAgents := runningNextAgents - runningAgents
+			startAgents(t, addAgents)
+		case runningAgents > runningNextAgents:
+			reduceAgents := runningAgents - runningNextAgents
+			interruptAgents(t, reduceAgents)
+		}
+		freq := t.TS.Frequency
+		time.Sleep(time.Duration(freq) * time.Second)
+	}
+}
+
+func startAgents(t *Target, amount int) {
+	for i := 0; i < amount; i++ {
+		agent := NewAgent(strconv.Itoa(t.Agents.Len()+1), make(chan bool))
+		t.Agents.PushBack(agent)
+		go agent.Run(t.AgentChannel)
+	}
+}
+
+func interruptAgents(t *Target, amount int) {
+	for i := 0; i < amount; i++ {
+		agentElem := t.Agents.Back()
+		agent := agentElem.Value.(*Agent)
+		t.Agents.Remove(agentElem)
+		go agent.Interrupt(t.AgentChannel)
 	}
 }

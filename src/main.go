@@ -1,14 +1,12 @@
 package main
 
 import (
-	"app"
-	"fmt"
+	"./app"
+	"./app/times"
 )
 
 func main() {
-	target1 := *app.NewTarget("target1", 5)
-	fmt.Printf("%v with %v agents running\n", target1.Name, len(target1.AgentChannel))
-	target1.UpdateAgents()	
-	fmt.Printf("%v with %v agents running\n", target1.Name, len(target1.AgentChannel))
-	
+	timeSeries := *times.LoadTimeSeries()
+	target := *app.NewTarget("target", timeSeries)
+	target.RunTimeSeries()
 }
