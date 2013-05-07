@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -14,5 +13,4 @@ func pullUrl(url string) {
 	}
 	ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
-	fmt.Println("Load generated...")
 }
