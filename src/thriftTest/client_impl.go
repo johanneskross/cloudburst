@@ -1,10 +1,10 @@
 package main
 
 import (
-	"./test"
 	"fmt"
 	"github.com/samuel/go-thrift"
 	"net"
+	"test"
 )
 
 func main() {

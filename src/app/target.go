@@ -1,25 +1,27 @@
 package app
 
 import (
-	"./times"
 	"container/list"
 	"fmt"
 	"strconv"
 	"time"
+	"times"
 )
 
+const toNanoseconds = 1000000000
+
 type Target struct {
-	Name         string
-	Agents       list.List
-	AgentChannel chan bool
-	TS           times.TimeSeries
+	Name          string
+	Agents        list.List
+	AgentChannel  chan bool
+	Configuration TargetConfiguration
 }
 
-func NewTarget(name string, timeSeries times.TimeSeries) *Target {
+func NewTarget(targetConfiguration TargetConfiguration) *Target {
 	agents := *list.New()
-	channelSize := calcChannelSize(timeSeries.Elements)
+	channelSize := calcChannelSize(targetConfiguration.TimeSeries.Elements)
 	agentChannel := make(chan bool, channelSize)
-	return &Target{name, agents, agentChannel, timeSeries}
+	return &Target{targetConfiguration.Name, agents, agentChannel, targetConfiguration}
 }
 
 func calcChannelSize(elements []*times.Element) int {
@@ -33,12 +35,22 @@ func calcChannelSize(elements []*times.Element) int {
 	return channelSize
 }
 
-func (t *Target) RunTimeSeries() {
-	duration := len(t.TS.Elements)
+func (t *Target) RunTimeSeries(c chan bool) {
+	fmt.Printf("Running time series on target: %v\n", t.Name)
+	
+	startTime := time.Now().UnixNano() + int64(t.Configuration.RampUp) * toNanoseconds
+	duration := len(t.Configuration.TimeSeries.Elements)
+	
 	for i := 0; i < duration; i++ {
+		// wait until next interval is due
+		nextInterval := (t.Configuration.TimeSeries.Elements[i].Timestamp * toNanoseconds) + startTime
+		t.Wait(nextInterval)
+
 		runningAgents := len(t.AgentChannel)
-		runningNextAgents := int(t.TS.Elements[i].Value)
-		fmt.Printf("Update amount of agents to %v\n", runningNextAgents)
+		runningNextAgents := int(t.Configuration.TimeSeries.Elements[i].Value)
+		fmt.Printf("Update amount of agents to %v on target: %v\n", runningNextAgents, t.Name)
+		
+		// update amount of agents for this interval
 		switch {
 		case runningAgents < runningNextAgents:
 			addAgents := runningNextAgents - runningAgents
@@ -47,14 +59,22 @@ func (t *Target) RunTimeSeries() {
 			reduceAgents := runningAgents - runningNextAgents
 			interruptAgents(t, reduceAgents)
 		}
-		freq := t.TS.Frequency
-		time.Sleep(time.Duration(freq) * time.Second)
+	}
+	c <- true
+}
+
+func (t *Target) Wait(nextInterval int64) {
+	currentTime := time.Now().UnixNano()
+	deltaTime := nextInterval - currentTime
+	fmt.Printf("Target %v waits %v seconds for next interval\n", t.Name, deltaTime / toNanoseconds)
+	if deltaTime > 0 {
+		time.Sleep(time.Duration(deltaTime))
 	}
 }
 
 func startAgents(t *Target, amount int) {
 	for i := 0; i < amount; i++ {
-		agent := NewAgent(strconv.Itoa(t.Agents.Len()+1), make(chan bool))
+		agent := NewAgent(strconv.Itoa(t.Agents.Len()+1)+"("+t.Name+")", make(chan bool))
 		t.Agents.PushBack(agent)
 		go agent.Run(t.AgentChannel)
 	}

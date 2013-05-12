@@ -1,12 +1,10 @@
 package main
 
 import (
-	"./app"
-	"./app/times"
+	"app"
 )
 
 func main() {
-	timeSeries := *times.LoadTimeSeries()
-	target := *app.NewTarget("target", timeSeries)
-	target.RunTimeSeries()
+	scenario := app.Scenario{}
+	scenario.Launch()
 }

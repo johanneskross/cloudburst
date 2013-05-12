@@ -22,11 +22,13 @@ func (agent *Agent) GenerateLoad() {
 
 func (agent *Agent) Run(c chan bool) {
 	fmt.Printf("Starting agent #%v ..\n", agent.Name)
+
 	c <- true
+
 	for {
 		select {
 		case <-agent.Quit:
-			fmt.Printf("Stopping agent #%v ..\n", agent.Name)
+			fmt.Printf("Stopping agent: #%v ..\n", agent.Name)
 			close(agent.Quit)
 			<-c
 			return

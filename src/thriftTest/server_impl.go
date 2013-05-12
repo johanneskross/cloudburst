@@ -1,11 +1,11 @@
 package main
 
 import (
-	"./test"
 	"fmt"
 	"github.com/samuel/go-thrift"
 	"net"
 	"net/rpc"
+	"test"
 )
 
 type userStorageServiceImplementation int
