@@ -8,16 +8,13 @@ import (
 const URL = "http://www.example.com/"
 
 type Agent struct {
-	Name, Url string
-	Quit      chan bool
+	Name, Url      string
+	Quit           chan bool
+	Generator      Generator
 }
 
-func NewAgent(name string, quit chan bool) *Agent {
-	return &Agent{name, URL, quit}
-}
-
-func (agent *Agent) GenerateLoad() {
-	pullUrl(agent.Url)
+func NewAgent(name string, quit chan bool, generator Generator) *Agent {
+	return &Agent{name, URL, quit, generator}
 }
 
 func (agent *Agent) Run(c chan bool) {
@@ -33,12 +30,27 @@ func (agent *Agent) Run(c chan bool) {
 			<-c
 			return
 		default:
-			agent.GenerateLoad()
-			time.Sleep(1 * time.Second)
+			operation := agent.Generator.NextOperation()
+			startTime := time.Duration(time.Now().Unix())
+			agent.OperateSync(startTime, operation)
 		}
 	}
 }
 
 func (agent *Agent) Interrupt(c chan bool) {
 	agent.Quit <- true
+}
+
+func (agent *Agent) OperateSync(startTime time.Duration, operate Operate) {	
+	operate.Run()
+	agent.Sync(startTime)
+}
+
+func (agent *Agent) Sync(startTime time.Duration) {
+	thinkTime := time.Duration(agent.Generator.thinkTime) * time.Second
+	endTime := startTime + thinkTime
+	deltaTime := endTime - startTime
+	if deltaTime > 0 {
+		time.Sleep(deltaTime)
+	}
 }

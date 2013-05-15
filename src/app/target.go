@@ -39,7 +39,7 @@ func (t *Target) RunTimeSeries(c chan bool) {
 	fmt.Printf("Running time series on target: %v\n", t.Name)
 	
 	startTime := time.Now().UnixNano() + int64(t.Configuration.RampUp) * toNanoseconds
-	duration := len(t.Configuration.TimeSeries.Elements)
+	duration := t.Configuration.Duration
 	
 	for i := 0; i < duration; i++ {
 		// wait until next interval is due
@@ -74,7 +74,7 @@ func (t *Target) Wait(nextInterval int64) {
 
 func startAgents(t *Target, amount int) {
 	for i := 0; i < amount; i++ {
-		agent := NewAgent(strconv.Itoa(t.Agents.Len()+1)+"("+t.Name+")", make(chan bool))
+		agent := NewAgent(strconv.Itoa(t.Agents.Len()+1)+"("+t.Name+")", make(chan bool), *NewGenerator())
 		t.Agents.PushBack(agent)
 		go agent.Run(t.AgentChannel)
 	}
