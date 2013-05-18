@@ -1,10 +1,10 @@
 package main
 
 import (
-	"app"
+	"cloudburst"
 )
 
 func main() {
-	scenario := app.Scenario{}
+	scenario := cloudburst.Scenario{}
 	scenario.Launch()
 }

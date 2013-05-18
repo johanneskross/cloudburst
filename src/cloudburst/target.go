@@ -1,4 +1,4 @@
-package app
+package cloudburst
 
 import (
 	"container/list"
@@ -74,7 +74,7 @@ func (t *Target) Wait(nextInterval int64) {
 
 func startAgents(t *Target, amount int) {
 	for i := 0; i < amount; i++ {
-		agent := NewAgent(strconv.Itoa(t.Agents.Len()+1)+"("+t.Name+")", make(chan bool), *NewGenerator())
+		agent := NewAgent(strconv.Itoa(t.Agents.Len()+1)+"("+t.Name+")", make(chan bool), *factory.CreateGenerator())
 		t.Agents.PushBack(agent)
 		go agent.Run(t.AgentChannel)
 	}

@@ -1,4 +1,4 @@
-package app
+package cloudburst
 
 import (
 	"io/ioutil"

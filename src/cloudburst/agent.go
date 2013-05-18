@@ -1,4 +1,4 @@
-package app
+package cloudburst
 
 import (
 	"fmt"
@@ -30,9 +30,9 @@ func (agent *Agent) Run(c chan bool) {
 			<-c
 			return
 		default:
-			operation := agent.Generator.NextOperation()
+			operation := agent.Generator.NextRequest()
 			startTime := time.Duration(time.Now().Unix())
-			agent.OperateSync(startTime, operation)
+			agent.OperateSync(startTime, *operation)
 		}
 	}
 }
@@ -41,13 +41,13 @@ func (agent *Agent) Interrupt(c chan bool) {
 	agent.Quit <- true
 }
 
-func (agent *Agent) OperateSync(startTime time.Duration, operate Operate) {	
-	operate.Run()
+func (agent *Agent) OperateSync(startTime time.Duration, operation Operation) {	
+	operation.Run()
 	agent.Sync(startTime)
 }
 
 func (agent *Agent) Sync(startTime time.Duration) {
-	thinkTime := time.Duration(agent.Generator.thinkTime) * time.Second
+	thinkTime := time.Duration(agent.Generator.GetThinkTime()) * time.Second
 	endTime := startTime + thinkTime
 	deltaTime := endTime - startTime
 	if deltaTime > 0 {
