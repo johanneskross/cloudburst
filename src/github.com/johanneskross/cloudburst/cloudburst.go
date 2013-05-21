@@ -1,12 +1,11 @@
 package cloudburst
 
-import (
-)
+import ()
 
 type Scenario struct {
 }
 
-func NewScenario() *Scenario{
+func NewScenario() *Scenario {
 	return &Scenario{}
 }
 

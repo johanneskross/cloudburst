@@ -6,7 +6,7 @@ import (
 
 type TargetManager struct {
 	Schedule TargetSchedule
-	Factory Factory
+	Factory  Factory
 }
 
 func NewTargetManager(schedule TargetSchedule, factory Factory) *TargetManager {
@@ -25,7 +25,7 @@ func (targetManager *TargetManager) processSchedule(joinChannel chan bool) {
 		target := NewTarget(*targetConfiguration, targetManager.Factory)
 		go target.RunTimeSeries(joinTargetChannel)
 	}
-	
+
 	// wait until all targets ended
 	for i := 0; i < cap(joinTargetChannel); i++ {
 		<-joinTargetChannel

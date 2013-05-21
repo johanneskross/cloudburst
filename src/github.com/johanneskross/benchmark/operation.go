@@ -8,7 +8,7 @@ const OperationBrowseId = 0
 const OperationManageId = 1
 
 func GetOperation(operationId int) cloudburst.Operation {
-	switch operationId{
+	switch operationId {
 	case OperationBrowseId:
 		return CreateOperationBrowse()
 	case OperationManageId:
@@ -18,11 +18,11 @@ func GetOperation(operationId int) cloudburst.Operation {
 }
 
 func CreateOperationBrowse() cloudburst.Operation {
-	op := NewOperationBrowse("purchase operation", 0, 0, false, 0)
+	op := NewOperationBrowse("purchase operation", 0, 0, false, 0, NewOperationHelper())
 	return cloudburst.Operation(op)
 }
 
 func CreateOperationManage() cloudburst.Operation {
-	op := NewOperationManage("manage operation", 0, 0, false, 0)
+	op := NewOperationManage("manage operation", 0, 0, false, 0, NewOperationHelper())
 	return cloudburst.Operation(op)
 }

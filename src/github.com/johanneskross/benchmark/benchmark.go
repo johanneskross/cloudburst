@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-func RunBenchmark () {
+func RunBenchmark() {
 	scenario := cloudburst.NewScenario()
 	schedule := *cloudburst.NewTargetSchedule()
 

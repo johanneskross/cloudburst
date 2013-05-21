@@ -1,21 +1,22 @@
-package benchmark 
+package benchmark
 
 import (
 	"fmt"
 )
 
 type OperationBrowse struct {
-	Id                     string
+	Id                       string
 	StartTime, EndTime       int
 	Success                  bool
 	NumberOfActionsPerformed int
+	Do                       OperationHelper
 }
 
-func NewOperationBrowse(name string, startTime, endTime int, success bool, numberOfActionsPerformed int) *OperationBrowse{
-	return &OperationBrowse{name, startTime, endTime, success, numberOfActionsPerformed}
+func NewOperationBrowse(name string, startTime, endTime int, success bool, numberOfActionsPerformed int, helper OperationHelper) *OperationBrowse {
+	return &OperationBrowse{name, startTime, endTime, success, numberOfActionsPerformed, helper}
 }
 
-func (o *OperationBrowse) Name() string{
+func (o *OperationBrowse) Name() string {
 	return o.Id
 }
 

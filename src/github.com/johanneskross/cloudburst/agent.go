@@ -8,9 +8,9 @@ import (
 const URL = "http://www.example.com/"
 
 type Agent struct {
-	Name, Url      string
-	Quit           chan bool
-	Generator      Generator
+	Name, Url string
+	Quit      chan bool
+	Generator Generator
 }
 
 func NewAgent(name string, quit chan bool, generator Generator) *Agent {
@@ -40,7 +40,7 @@ func (agent *Agent) Interrupt(c chan bool) {
 	agent.Quit <- true
 }
 
-func (agent *Agent) OperateSync(operation Operation) {	
+func (agent *Agent) OperateSync(operation Operation) {
 	operation.Run()
 	agent.Sync()
 }

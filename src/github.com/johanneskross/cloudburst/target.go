@@ -3,9 +3,9 @@ package cloudburst
 import (
 	"container/list"
 	"fmt"
+	"github.com/johanneskross/times"
 	"strconv"
 	"time"
-	"github.com/johanneskross/times"
 )
 
 const toNanoseconds = 1000000000
@@ -15,7 +15,7 @@ type Target struct {
 	Agents        list.List
 	AgentChannel  chan bool
 	Configuration TargetConfiguration
-	Factory 	  Factory
+	Factory       Factory
 }
 
 func NewTarget(targetConfiguration TargetConfiguration, factory Factory) *Target {
@@ -38,10 +38,10 @@ func calcChannelSize(elements []*times.Element) int {
 
 func (t *Target) RunTimeSeries(c chan bool) {
 	fmt.Printf("Running time series on target: %v\n", t.Name)
-	
+
 	startTime := time.Now().UnixNano() // + rampup
 	duration := t.Configuration.Duration
-	
+
 	for i := 0; i < duration; i++ {
 		// wait until next interval is due
 		nextInterval := (t.Configuration.TimeSeries.Elements[i].Timestamp * toNanoseconds) + startTime
@@ -50,7 +50,7 @@ func (t *Target) RunTimeSeries(c chan bool) {
 		runningAgents := len(t.AgentChannel)
 		runningNextAgents := int(t.Configuration.TimeSeries.Elements[i].Value)
 		fmt.Printf("Update amount of agents to %v on target: %v\n", runningNextAgents, t.Name)
-		
+
 		// update amount of agents for this interval
 		switch {
 		case runningAgents < runningNextAgents:
@@ -67,7 +67,7 @@ func (t *Target) RunTimeSeries(c chan bool) {
 func (t *Target) Wait(nextInterval int64) {
 	currentTime := time.Now().UnixNano()
 	deltaTime := nextInterval - currentTime
-	fmt.Printf("Target %v waits %v seconds for next interval\n", t.Name, deltaTime / toNanoseconds)
+	fmt.Printf("Target %v waits %v seconds for next interval\n", t.Name, deltaTime/toNanoseconds)
 	if deltaTime > 0 {
 		time.Sleep(time.Duration(deltaTime))
 	}
