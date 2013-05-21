@@ -1,0 +1,30 @@
+{
+	"targetFactory" :
+	{
+		"targetFactoryClass" : "github.com/johanneskross/benchmark",
+		"targetFactoryParams" : 
+		{
+			"timesHost" : "monitor0.dfg",
+			"port" : 7855
+		}
+	},
+	"targetSchedule" : [
+		{
+			"delay" : 0,
+			"rampUp" : 200,
+			"duration" : 200,
+			"rampDown" : 10,
+			"targetFactory" : "github.com/johanneskross/benchmark",
+			"workloadProfileName" : "O2_business_ADDORDER_profile_user"
+		},
+		{
+			"delay" : 0,
+			"rampUp" : 200,
+			"duration" : 200,
+			"rampDown" : 10,
+			"targetFactory" : "github.com/johanneskross/benchmark",
+			"workloadProfileName" : "O2_business_ADDORDER_profile_user"
+		}
+	]
+}
+
