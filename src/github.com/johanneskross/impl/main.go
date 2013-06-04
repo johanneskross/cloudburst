@@ -1,9 +1,7 @@
 package main
 
-import(
-	"github.com/johanneskross/benchmark"
-)
+import "github.com/johanneskross/benchmark"
 
-func main(){
+func main() {
 	benchmark.RunBenchmark()
 }

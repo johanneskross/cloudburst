@@ -4,9 +4,9 @@ import ()
 
 type Operation interface {
 	Name() string
-//	StartTime()
-//	EndTime()
-//	Success() bool
-//	NumberOfActionsPerformed() int
+	//	StartTime()
+	//	EndTime()
+	//	Success() bool
+	//	NumberOfActionsPerformed() int
 	Run()
 }

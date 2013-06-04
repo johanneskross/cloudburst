@@ -9,6 +9,6 @@ type Factory interface {
 type Generator interface {
 	GetThinkTime() int64
 	GetCycleTime() int64
-//	GetOperation()
+	//	GetOperation()
 	NextRequest() Operation
 }
