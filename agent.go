@@ -11,10 +11,11 @@ type Agent struct {
 	Quit                   chan bool
 	Generator              Generator
 	OperationResultChannel chan OperationResult
+	Timing                 *Timing
 }
 
-func NewAgent(agentId, targetId int, targetIp string, quit chan bool, generator Generator, operationResultChannel chan OperationResult) *Agent {
-	return &Agent{agentId, targetId, targetIp, quit, generator, operationResultChannel}
+func NewAgent(agentId, targetId int, targetIp string, quit chan bool, generator Generator, operationResultChannel chan OperationResult, timing *Timing) *Agent {
+	return &Agent{agentId, targetId, targetIp, quit, generator, operationResultChannel, timing}
 }
 
 func (agent *Agent) Run(c chan bool) {
@@ -41,23 +42,22 @@ func (agent *Agent) Interrupt(c chan bool) {
 }
 
 func (agent *Agent) OperateSync(operation Operation) {
-	timeStarted := time.Duration(time.Now().Unix())
+	timeStarted := time.Duration(time.Now().UnixNano())
 
-	operation.Run()
+	operationResult := operation.Run(agent.Timing)
 
-	timeFinished := time.Duration(time.Now().Unix())
+	timeFinished := time.Duration(time.Now().UnixNano())
 
-	result := operation.GetResults()
-	result.TimeStarted = int64(timeStarted)
-	result.TimeFinished = int64(timeFinished)
-	agent.OperationResultChannel <- result
+	operationResult.TimeStarted = int64(timeStarted)
+	operationResult.TimeFinished = int64(timeFinished)
+	agent.OperationResultChannel <- operationResult
 
 	agent.Sync()
 }
 
 func (agent *Agent) Sync() {
 	thinkTime := time.Duration(agent.Generator.GetThinkTime()) * time.Second
-	now := time.Duration(time.Now().Unix())
+	now := time.Duration(time.Now().Unix()) // in seconds
 	endTime := now + thinkTime
 	deltaTime := endTime - now
 	if deltaTime > 0 {

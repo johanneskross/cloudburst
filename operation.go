@@ -9,8 +9,7 @@ const RAMP_UP_TRACE_LABEL = "[RAMP-UP]"
 const RAMP_DOWN_TRACE_LABEL = "[RAMP-DOWN]"
 
 type Operation interface {
-	Run()
-	GetResults() OperationResult
+	Run(timing *Timing) OperationResult
 }
 
 type OperationResult struct {
@@ -22,8 +21,8 @@ type OperationResult struct {
 	TraceLabel                                                    string
 }
 
-func (or *OperationResult) ActionPerformed() {
-	or.ActionsPerformed++
+func (or *OperationResult) ActionPerformed(amount int) {
+	or.ActionsPerformed += int64(amount)
 }
 
 func (or *OperationResult) GetExecutionTime() int64 {

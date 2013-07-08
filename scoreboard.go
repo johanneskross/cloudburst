@@ -1,8 +1,6 @@
 package cloudburst
 
-import (
-	"fmt"
-)
+import ()
 
 type Scoreboard struct {
 	TargetId, TotalDropoffs, TotalDropOffWaitTime, MaxDropOffWaitTime int
@@ -19,14 +17,9 @@ func (scoreboard *Scoreboard) Run(quit chan bool) {
 	for {
 		select {
 		case operationResult := <-scoreboard.OperationResultChannel:
-			//fmt.Println("Received result")
-			//fmt.Println(operationResult)
 			scoreboard.Scorecard.processResult(operationResult)
 		case <-quit:
-			fmt.Println("----- SCOREBOARD -----")
-			fmt.Println(scoreboard.Scorecard.operationSummary)
-			fmt.Println("MAP")
-			fmt.Println(scoreboard.Scorecard.operationSummaryMap)
+			quit <- true
 			return
 		}
 	}

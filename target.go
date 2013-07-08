@@ -3,11 +3,11 @@ package cloudburst
 import (
 	"container/list"
 	"fmt"
-	"github.com/johanneskross/times"
+	"github.com/johanneskross/cloudburst/times"
 	"time"
 )
 
-const toNanoseconds = 1000000000
+const TO_NANO = 1000000000
 
 type Target struct {
 	TargetId      int
@@ -16,6 +16,7 @@ type Target struct {
 	Configuration TargetConfiguration
 	Factory       Factory
 	Scoreboard    *Scoreboard
+	Timing        *Timing
 }
 
 func NewTarget(targetConfiguration TargetConfiguration, factory Factory) *Target {
@@ -24,7 +25,8 @@ func NewTarget(targetConfiguration TargetConfiguration, factory Factory) *Target
 	channelSize = 200
 	agentChannel := make(chan bool, channelSize)
 	scoreboard := NewScoreboard(targetConfiguration.TargetId)
-	return &Target{targetConfiguration.TargetId, agents, agentChannel, targetConfiguration, factory, scoreboard}
+	timing := NewTiming(targetConfiguration.RampUp, targetConfiguration.Duration, targetConfiguration.RampDown)
+	return &Target{targetConfiguration.TargetId, agents, agentChannel, targetConfiguration, factory, scoreboard, timing}
 }
 
 func calcChannelSize(elements []*times.Element) int {
@@ -40,23 +42,23 @@ func calcChannelSize(elements []*times.Element) int {
 
 func (t *Target) RunTimeSeries(c chan bool) {
 	fmt.Printf("Running time series on target: %v\n", t.TargetId)
+
 	scoreboardQuitQuannel := make(chan bool)
 	go t.Scoreboard.Run(scoreboardQuitQuannel)
 
-	startTime := time.Now().UnixNano() // + rampup
-	duration := t.Configuration.Duration
-	duration = duration
+	t.Wait(t.Timing.StartSteadyState)
+	interval := 0
 
-	for i := 0; i < 2; i++ {
+	for t.Timing.InSteadyState(time.Now().UnixNano()) {
 		// wait until next interval is due
-		nextInterval := (t.Configuration.TimeSeries.Elements[i].Timestamp * toNanoseconds) + startTime
+		nextInterval := (t.Configuration.TimeSeries.Elements[interval].Timestamp * TO_NANO) + t.Timing.StartSteadyState
 		t.Wait(nextInterval)
 
 		runningAgents := len(t.AgentChannel)
-		fmt.Println(runningAgents)
-		runningNextAgents := int(t.Configuration.TimeSeries.Elements[i].Value)
-		runningNextAgents = 200
-		fmt.Printf("Update amount of agents to %v on target: %v\n", runningNextAgents, t.TargetId)
+		runningNextAgents := int(t.Configuration.TimeSeries.Elements[interval].Value)
+		runningNextAgents = 50 // For test reason
+		fmt.Printf("Update amount of agents to %v on target%v in interval %v\n", runningNextAgents, t.TargetId, interval)
+		interval++
 
 		// update amount of agents for this interval
 		switch {
@@ -69,13 +71,14 @@ func (t *Target) RunTimeSeries(c chan bool) {
 		}
 	}
 	scoreboardQuitQuannel <- true
+	<-scoreboardQuitQuannel
 	c <- true
 }
 
 func (t *Target) Wait(nextInterval int64) {
 	currentTime := time.Now().UnixNano()
 	deltaTime := nextInterval - currentTime
-	fmt.Printf("Target %v waits %v seconds for next interval\n", t.TargetId, deltaTime/toNanoseconds)
+	//fmt.Printf("Target %v waits %v seconds for next interval\n", t.TargetId, deltaTime/TO_NANO)
 	if deltaTime > 0 {
 		time.Sleep(time.Duration(deltaTime))
 	}
@@ -83,7 +86,7 @@ func (t *Target) Wait(nextInterval int64) {
 
 func startAgents(t *Target, amount int) {
 	for i := 0; i < amount; i++ {
-		agent := NewAgent(t.Agents.Len()+1, t.TargetId, t.Configuration.TargetIp, make(chan bool), t.Factory.CreateGenerator(), t.Scoreboard.OperationResultChannel)
+		agent := NewAgent(t.Agents.Len()+1, t.TargetId, t.Configuration.TargetIp, make(chan bool), t.Factory.CreateGenerator(), t.Scoreboard.OperationResultChannel, t.Timing)
 		t.Agents.PushBack(agent)
 		go agent.Run(t.AgentChannel)
 	}
