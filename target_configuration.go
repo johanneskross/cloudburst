@@ -8,7 +8,7 @@ type TargetConfiguration struct {
 	Offset, RampUp, Duration, RampDown int64
 	WorkloadProfileIndex               int
 	WorkloadProfileName                string
-	WorkloadProfilOffset               int64
+	WorkloadProfileOffset              int64
 	TargetFactory                      TargetFactory
 }
 
@@ -30,6 +30,6 @@ func NewTargetConfiguration(
 		rampDown * TO_NANO,
 		workloadProfileIndex,
 		workloadProfileName,
-		workloadProfileOffset,
+		workloadProfileOffset * TO_NANO,
 		targetFactory}
 }

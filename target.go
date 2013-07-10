@@ -67,8 +67,9 @@ func (t *Target) RunTimeSeries(c chan bool) {
 func (t *Target) Wait(nextInterval int64) {
 	currentTime := time.Now().UnixNano()
 	deltaTime := nextInterval - currentTime
-	//fmt.Printf("Target %v waits %v seconds for next interval\n", t.TargetId, deltaTime/TO_NANO)
+
 	if deltaTime > 0 {
+		fmt.Printf("Target %v waits %v seconds for next interval\n", t.TargetId, deltaTime/TO_NANO)
 		time.Sleep(time.Duration(deltaTime))
 	}
 }

@@ -47,6 +47,7 @@ func (targetManager *TargetManager) createAndStartTarget(targetConfiguration *Ta
 
 		// Set target values
 		target.TargetId = targetManager.TargetId
+		target.LoadManager.TargetId = targetManager.TargetId
 		targetManager.TargetId++
 		target.Timing = NewTiming(targetConfiguration.RampUp, targetConfiguration.Duration, targetConfiguration.RampDown)
 
