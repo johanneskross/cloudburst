@@ -7,6 +7,7 @@ import (
 const INT64_MAX_VALUE = 9223372036854775807
 const INT64_MIN_VALUE = -9223372036854775808
 const RTIME_T = 3000
+const meanResponseTimeSamplingInterval = 30
 
 type OperationSummary struct {
 	ResponseTimeSampler PoissonSampling

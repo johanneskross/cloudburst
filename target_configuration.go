@@ -1,16 +1,35 @@
 package cloudburst
 
-import (
-	"github.com/johanneskross/cloudburst/times"
-)
+import ()
 
 type TargetConfiguration struct {
-	TargetId                          int
-	TargetIp                          string
-	Delay, RampUp, Duration, RampDown int64
-	TimeSeries                        times.TimeSeries
+	TargetId                           int
+	TargetIp                           string
+	Offset, RampUp, Duration, RampDown int64
+	WorkloadProfileIndex               int
+	WorkloadProfileName                string
+	WorkloadProfilOffset               int64
+	TargetFactory                      TargetFactory
 }
 
-func NewTargetConfiguration(targetId int, targetIp string, delay, rampUp, duration, rampDown int64, timeSeries times.TimeSeries) *TargetConfiguration {
-	return &TargetConfiguration{targetId, targetIp, delay * TO_NANO, rampUp * TO_NANO, duration * TO_NANO, rampDown * TO_NANO, timeSeries}
+func NewTargetConfiguration(
+	targetId int,
+	targetIp string,
+	offset, rampUp, duration, rampDown int64,
+	workloadProfileIndex int,
+	workloadProfileName string,
+	workloadProfileOffset int64,
+	targetFactory TargetFactory) *TargetConfiguration {
+
+	return &TargetConfiguration{
+		targetId,
+		targetIp,
+		offset * TO_NANO,
+		rampUp * TO_NANO,
+		duration * TO_NANO,
+		rampDown * TO_NANO,
+		workloadProfileIndex,
+		workloadProfileName,
+		workloadProfileOffset,
+		targetFactory}
 }

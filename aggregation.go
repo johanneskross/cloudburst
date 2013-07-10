@@ -1,15 +1,17 @@
 package cloudburst
 
-import ()
+import (
+	"container/list"
+)
 
-func AggregateScoreboards(targets []*Target, duration int64) {
+func AggregateScoreboards(targets *list.List, duration int64) {
 
 	globalScorecard := NewScorecard(-1)
 
-	for i := 0; i < len(targets); i++ {
+	for elem := targets.Front(); elem != nil; elem = elem.Next() {
 		// TODO DUMP TO SONAR
-
-		scoreboard := targets[i].Scoreboard
+		target := elem.Value.(*Target)
+		scoreboard := target.Scoreboard
 		scorecard := scoreboard.Scorecard
 		globalScorecard.merge(scorecard)
 

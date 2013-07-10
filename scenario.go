@@ -6,7 +6,7 @@ type Scenario struct {
 	TargetManager *TargetManager
 }
 
-func NewScenario(schedule TargetSchedule, factory Factory) *Scenario {
+func NewScenario(schedule *TargetSchedule, factory Factory) *Scenario {
 	return &Scenario{NewTargetManager(schedule, factory)}
 }
 
@@ -17,5 +17,5 @@ func (scenario *Scenario) Launch() {
 }
 
 func (scenario *Scenario) AggregateStatistics() {
-	AggregateScoreboards(scenario.TargetManager.Targets, 0)
+	AggregateScoreboards(scenario.TargetManager.Targets, 10)
 }

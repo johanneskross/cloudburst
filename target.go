@@ -3,7 +3,6 @@ package cloudburst
 import (
 	"container/list"
 	"fmt"
-	"github.com/johanneskross/cloudburst/times"
 	"time"
 )
 
@@ -13,31 +12,21 @@ type Target struct {
 	TargetId      int
 	Agents        list.List
 	AgentChannel  chan bool
-	Configuration TargetConfiguration
+	Configuration *TargetConfiguration
 	Factory       Factory
 	Scoreboard    *Scoreboard
 	Timing        *Timing
+	LoadManager   *LoadManager
 }
 
-func NewTarget(targetConfiguration TargetConfiguration, factory Factory) *Target {
+func NewTarget(targetConfiguration *TargetConfiguration, factory Factory, loadManager *LoadManager) *Target {
 	agents := *list.New()
-	channelSize := calcChannelSize(targetConfiguration.TimeSeries.Elements)
+	channelSize := loadManager.LoadSchedule.MaxAgents()
 	channelSize = 200
 	agentChannel := make(chan bool, channelSize)
 	scoreboard := NewScoreboard(targetConfiguration.TargetId)
-	timing := NewTiming(targetConfiguration.RampUp, targetConfiguration.Duration, targetConfiguration.RampDown)
-	return &Target{targetConfiguration.TargetId, agents, agentChannel, targetConfiguration, factory, scoreboard, timing}
-}
-
-func calcChannelSize(elements []*times.Element) int {
-	channelSize := 0
-	for i := 0; i < len(elements); i++ {
-		value := int(elements[i].Value)
-		if value > channelSize {
-			channelSize = value
-		}
-	}
-	return channelSize
+	timing := &Timing{}
+	return &Target{targetConfiguration.TargetId, agents, agentChannel, targetConfiguration, factory, scoreboard, timing, loadManager}
 }
 
 func (t *Target) RunTimeSeries(c chan bool) {
@@ -47,18 +36,16 @@ func (t *Target) RunTimeSeries(c chan bool) {
 	go t.Scoreboard.Run(scoreboardQuitQuannel)
 
 	t.Wait(t.Timing.StartSteadyState)
-	interval := 0
 
 	for t.Timing.InSteadyState(time.Now().UnixNano()) {
 		// wait until next interval is due
-		nextInterval := (t.Configuration.TimeSeries.Elements[interval].Timestamp * TO_NANO) + t.Timing.StartSteadyState
-		t.Wait(nextInterval)
+		loadUnit := t.LoadManager.NextLoadUnit()
+		loadUnit.Activiate()
 
 		runningAgents := len(t.AgentChannel)
-		runningNextAgents := int(t.Configuration.TimeSeries.Elements[interval].Value)
-		runningNextAgents = 50 // For test reason
-		fmt.Printf("Update amount of agents to %v on target%v in interval %v\n", runningNextAgents, t.TargetId, interval)
-		interval++
+		runningNextAgents := int(loadUnit.NumberOfUsers)
+		//runningNextAgents = 50 // For test reason
+		fmt.Printf("Update amount of agents to %v on target%v\n", runningNextAgents, t.TargetId)
 
 		// update amount of agents for this interval
 		switch {
@@ -69,6 +56,8 @@ func (t *Target) RunTimeSeries(c chan bool) {
 			reduceAgents := runningAgents - runningNextAgents
 			interruptAgents(t, reduceAgents)
 		}
+
+		t.Wait(loadUnit.IntervalEnd())
 	}
 	scoreboardQuitQuannel <- true
 	<-scoreboardQuitQuannel

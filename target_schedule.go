@@ -5,14 +5,22 @@ import (
 )
 
 type TargetSchedule struct {
-	TargetConfigurations list.List
+	TargetConfigurations *list.List
+	Duration             int64
 }
 
 func NewTargetSchedule() *TargetSchedule {
-	targetConfigurations := *list.New()
-	return &TargetSchedule{targetConfigurations}
+	return &TargetSchedule{}
 }
 
 func (targetSchedule *TargetSchedule) AddTargetConfiguration(targetConfiguration *TargetConfiguration) {
-	targetSchedule.TargetConfigurations.PushBack(targetConfiguration)
+	finishTime := targetConfiguration.Offset + targetConfiguration.RampUp + targetConfiguration.Duration + targetConfiguration.RampDown
+	if finishTime > targetSchedule.Duration {
+		targetSchedule.Duration = finishTime
+	}
+
+	if targetSchedule.TargetConfigurations == nil {
+		targetSchedule.TargetConfigurations = list.New()
+	}
+	targetSchedule.TargetConfigurations.PushFront(targetConfiguration)
 }
