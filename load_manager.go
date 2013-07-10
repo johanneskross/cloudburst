@@ -9,8 +9,8 @@ type LoadManager struct {
 	NextLoadIndex   int
 }
 
-func NewLoadManager(targetId int, loadSchedule *LoadSchedule) *LoadManager {
-	return &LoadManager{targetId, loadSchedule, nil, -1}
+func NewLoadManager(loadSchedule *LoadSchedule) *LoadManager {
+	return &LoadManager{-1, loadSchedule, nil, -1}
 }
 
 func (loadManager *LoadManager) NextLoadUnit() *LoadUnit {

@@ -20,18 +20,24 @@ type Target struct {
 }
 
 func NewTarget(targetConfiguration *TargetConfiguration, factory Factory, loadManager *LoadManager) *Target {
-	agents := *list.New()
 	channelSize := loadManager.LoadSchedule.MaxAgents()
-	channelSize = 200
+	channelSize = 200 // For test purpose
 	agentChannel := make(chan bool, channelSize)
-	scoreboard := NewScoreboard(targetConfiguration.TargetId)
-	timing := &Timing{}
-	return &Target{targetConfiguration.TargetId, agents, agentChannel, targetConfiguration, factory, scoreboard, timing, loadManager}
+
+	target := &Target{}
+	target.TargetId = -1
+	target.Agents = *list.New()
+	target.AgentChannel = agentChannel
+	target.Configuration = targetConfiguration
+	target.Factory = factory
+	target.LoadManager = loadManager
+	return target
 }
 
 func (t *Target) RunTimeSeries(c chan bool) {
 	fmt.Printf("Running time series on target: %v\n", t.TargetId)
 
+	t.Scoreboard = NewScoreboard(t.TargetId)
 	scoreboardQuitQuannel := make(chan bool)
 	go t.Scoreboard.Run(scoreboardQuitQuannel)
 
@@ -44,7 +50,7 @@ func (t *Target) RunTimeSeries(c chan bool) {
 
 		runningAgents := len(t.AgentChannel)
 		runningNextAgents := int(loadUnit.NumberOfUsers)
-		//runningNextAgents = 50 // For test reason
+		//runningNextAgents = 50 // For test purpose
 		fmt.Printf("Update amount of agents to %v on target%v\n", runningNextAgents, t.TargetId)
 
 		// update amount of agents for this interval
