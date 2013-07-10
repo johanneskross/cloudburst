@@ -36,7 +36,7 @@ func (poisson PoissonSampling) Accept(value int64) bool {
 	poisson.SampleSeen++
 
 	if poisson.SampleSeen == poisson.NextSampleToAccept {
-		// TODO 
+		// TODO
 
 		rand.Seed(time.Now().UTC().UnixNano())
 		random := rand.Float64()

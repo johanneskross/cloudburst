@@ -3,6 +3,7 @@ package cloudburst
 import (
 	"container/list"
 	"fmt"
+	"github.com/johanneskross/cloudburst/load"
 	"time"
 )
 
@@ -16,10 +17,10 @@ type Target struct {
 	Factory       Factory
 	Scoreboard    *Scoreboard
 	Timing        *Timing
-	LoadManager   *LoadManager
+	LoadManager   *load.LoadManager
 }
 
-func NewTarget(targetConfiguration *TargetConfiguration, factory Factory, loadManager *LoadManager) *Target {
+func NewTarget(targetConfiguration *TargetConfiguration, factory Factory, loadManager *load.LoadManager) *Target {
 	channelSize := loadManager.LoadSchedule.MaxAgents()
 	channelSize = 200 // For test purpose
 	agentChannel := make(chan bool, channelSize)
