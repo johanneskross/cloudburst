@@ -1,16 +1,16 @@
 package cloudburst
 
 import (
-	"fmt"
+	"math"
 )
 
 const INT64_MAX_VALUE = 9223372036854775807
 const INT64_MIN_VALUE = -9223372036854775808
-const RTIME_T = 3000
+const RTIME_T = 3000000000
 const meanResponseTimeSamplingInterval = 30
 
 type OperationSummary struct {
-	ResponseTimeSampler PoissonSampling
+	ResponseTimeSampler MetricSampler
 
 	Merged            bool
 	OpsSuccessful     int64
@@ -25,11 +25,16 @@ type OperationSummary struct {
 	OpsFailedRtimeThreshold int64
 }
 
-func NewOperationSummary(sampling PoissonSampling) *OperationSummary {
+func NewOperationSummary(metricSampler MetricSampler) *OperationSummary {
 	os := &OperationSummary{}
+	os.ResponseTimeSampler = metricSampler
 	os.MinResponseTime = INT64_MAX_VALUE
 	os.MaxResponseTime = INT64_MIN_VALUE
 	return os
+}
+
+func (os *OperationSummary) ResetSamples() {
+	os.ResponseTimeSampler.Reset()
 }
 
 func (os *OperationSummary) processOperationSummary(operationResult OperationResult) {
@@ -47,7 +52,7 @@ func (os *OperationSummary) processOperationSummary(operationResult OperationRes
 			os.OpsFailedRtimeThreshold++
 		}
 
-		// psquare
+		// TODO psquared
 
 		if os.MaxResponseTime < responseTime {
 			os.MaxResponseTime = responseTime
@@ -76,28 +81,84 @@ func (operationSummary *OperationSummary) Merge(source *OperationSummary) {
 	operationSummary.TotalResponseTime += source.TotalResponseTime
 	operationSummary.OpsFailedRtimeThreshold += source.OpsFailedRtimeThreshold
 
-	// TODO merge time sampling
+	operationSummary.ResponseTimeSampler.Merge(source.ResponseTimeSampler)
 }
 
-func (operationSummary *OperationSummary) GetStatistics() {
-	fmt.Print("\n\tMerged: ")
-	fmt.Println(operationSummary.Merged)
-	fmt.Print("\tOps: ")
-	fmt.Println(operationSummary.Ops)
-	fmt.Print("\tOpsSuccessful: ")
-	fmt.Println(operationSummary.OpsSuccessful)
-	fmt.Print("\tOpsFailed: ")
-	fmt.Println(operationSummary.OpsFailed)
-	fmt.Print("\tActionsSuccessful: ")
-	fmt.Println(operationSummary.ActionsSuccessful)
-	fmt.Print("\tMinResponseTime[s]: ")
-	fmt.Println(operationSummary.MinResponseTime / TO_NANO)
-	fmt.Print("\tMaxResponseTime[s]: ")
-	fmt.Println(operationSummary.MaxResponseTime / TO_NANO)
-	fmt.Print("\tTotalResponseTime[s]: ")
-	fmt.Println(operationSummary.TotalResponseTime / TO_NANO)
-	fmt.Print("\tOpsFailedRtimeThreshold: ")
-	fmt.Println(operationSummary.OpsFailedRtimeThreshold)
+func (operationSummary *OperationSummary) GetOperationSummaryStatistics(duration int64) OperationSummaryStatistics {
+	var effectiveLoadOperations float64
+	var effectiveLoadRequests float64
+	var averageRTime float64
 
-	//fmt.Printf("Struct: %+v", operationSummary)
+	if duration > 0 {
+		effectiveLoadOperations = float64(operationSummary.OpsSuccessful) / (float64(duration) / TO_NANO)
+		effectiveLoadRequests = float64(operationSummary.ActionsSuccessful) / (float64(duration) / TO_NANO)
+	}
+
+	if operationSummary.OpsSuccessful > 0 {
+		averageRTime = float64(operationSummary.TotalResponseTime) / float64(operationSummary.OpsSuccessful)
+	}
+
+	stats := OperationSummaryStatistics{}
+	stats.OpsSuccessful = operationSummary.OpsSuccessful
+	stats.OpsFailed = operationSummary.OpsFailed
+	stats.OpsSeen = operationSummary.Ops
+	stats.ActionsSuccessful = operationSummary.ActionsSuccessful
+	stats.Ops = operationSummary.Ops
+
+	stats.EffectiveLoadOps = effectiveLoadOperations
+	stats.EffectiveLoadReq = effectiveLoadRequests
+
+	stats.RtimeTotal = operationSummary.TotalResponseTime
+	stats.RtimeThrFailed = operationSummary.OpsFailedRtimeThreshold
+	stats.RtimeAverage = operationSummary.nNaN(averageRTime)
+	stats.RtimeMax = operationSummary.MaxResponseTime
+	stats.RtimeMin = operationSummary.MinResponseTime
+
+	stats.SamplerSamplesCollected = operationSummary.ResponseTimeSampler.GetSamplesCollected()
+	stats.SamplerSamplesSeen = operationSummary.ResponseTimeSampler.GetSamplesSeen()
+	stats.SamplerRtime50th = operationSummary.nNaN(float64(operationSummary.ResponseTimeSampler.GetNthPercentile(50)))
+	stats.SamplerRtime90th = operationSummary.nNaN(float64(operationSummary.ResponseTimeSampler.GetNthPercentile(90)))
+	stats.SamplerRtime95th = operationSummary.nNaN(float64(operationSummary.ResponseTimeSampler.GetNthPercentile(95)))
+	stats.SamplerRtime99th = operationSummary.nNaN(float64(operationSummary.ResponseTimeSampler.GetNthPercentile(99)))
+	stats.SamplerRtimeMean = operationSummary.nNaN(float64(operationSummary.ResponseTimeSampler.GetSampleMean()))
+	stats.SamplerRtimeStdev = operationSummary.nNaN(float64(operationSummary.ResponseTimeSampler.GetSampleStandardDeviation()))
+	stats.SamplerRtimeTvalue = operationSummary.nNaN(float64(operationSummary.ResponseTimeSampler.GetTvalue(averageRTime)))
+
+	return stats
+}
+
+func (operationSummary *OperationSummary) nNaN(value float64) float64 {
+	if math.IsNaN(value) {
+		return 0
+	} else if math.IsInf(value, 0) {
+		return 0
+	}
+	return value
+}
+
+type OperationSummaryStatistics struct {
+	OpsSuccessful     int64 `json:"ops_successful"`
+	OpsFailed         int64 `json:"ops_failed"`
+	OpsSeen           int64 `json:"ops_seen"`
+	ActionsSuccessful int64 `json:"actions_successful"`
+	Ops               int64 `json:"ops"`
+
+	EffectiveLoadOps float64 `json:"effective_load_ops"`
+	EffectiveLoadReq float64 `json:"effective_load_req"`
+
+	RtimeTotal     int64   `json:"rtime_total"`
+	RtimeThrFailed int64   `json:"rtime_thr_failed"`
+	RtimeAverage   float64 `json:"rtime_average"`
+	RtimeMax       int64   `json:"rtime_max"`
+	RtimeMin       int64   `json:"rtime_min"`
+
+	SamplerSamplesCollected int     `json:"sampler_samples_collected`
+	SamplerSamplesSeen      int     `json:"sampler_samples_seen"`
+	SamplerRtime50th        float64 `json:"sampler_rtime_50th"`
+	SamplerRtime90th        float64 `json:"sampler_rtime_90th"`
+	SamplerRtime95th        float64 `json:"sampler_rtime_95th"`
+	SamplerRtime99th        float64 `json:"sampler_rtime_99th"`
+	SamplerRtimeMean        float64 `json:"sampler_rtime_mean"`
+	SamplerRtimeStdev       float64 `json:"sampler_rtime_stdev"`
+	SamplerRtimeTvalue      float64 `json:"sampler_rtime_tvalue"`
 }

@@ -26,7 +26,7 @@ func (targetManager *TargetManager) processSchedule(joinChannel chan bool) {
 	// create and start targets
 	for elem := targetConfigurations.Front(); elem != nil; elem = elem.Next() {
 		targetConfiguration := elem.Value.(*TargetConfiguration)
-		go targetManager.createAndStartTarget(targetConfiguration, joinTargetChannel, startBenchmarkTime)
+		targetManager.createAndStartTarget(targetConfiguration, joinTargetChannel, startBenchmarkTime)
 	}
 
 	// wait until all targets ended
@@ -47,16 +47,13 @@ func (targetManager *TargetManager) createAndStartTarget(targetConfiguration *Ta
 
 		// Set target values
 		target.TargetId = targetManager.TargetId
-		target.LoadManager.TargetId = targetManager.TargetId
 		targetManager.TargetId++
+		target.LoadManager.TargetId = targetManager.TargetId
 		target.Timing = NewTiming(targetConfiguration.RampUp, targetConfiguration.Duration, targetConfiguration.RampDown)
 
 		targetManager.Targets.PushBack(target)
 		go target.RunTimeSeries(joinTargetChannel)
 	}
-	//	target := NewTarget(*targetConfiguration, targetManager.Factory)
-	//	targetManager.Targets[targetCounter] = target
-	//	go target.RunTimeSeries(joinTargetChannel)
 }
 
 func (targetManager *TargetManager) countAllTargets() int {

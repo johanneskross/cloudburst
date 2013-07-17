@@ -11,7 +11,7 @@ const TO_NANO = 1000000000
 
 type Target struct {
 	TargetId      int
-	Agents        list.List
+	Agents        *list.List
 	AgentChannel  chan bool
 	Configuration *TargetConfiguration
 	Factory       Factory
@@ -27,7 +27,7 @@ func NewTarget(targetConfiguration *TargetConfiguration, factory Factory, loadMa
 
 	target := &Target{}
 	target.TargetId = -1
-	target.Agents = *list.New()
+	target.Agents = list.New()
 	target.AgentChannel = agentChannel
 	target.Configuration = targetConfiguration
 	target.Factory = factory
@@ -38,11 +38,11 @@ func NewTarget(targetConfiguration *TargetConfiguration, factory Factory, loadMa
 func (t *Target) RunTimeSeries(c chan bool) {
 	fmt.Printf("Running time series on target: %v\n", t.TargetId)
 
-	t.Scoreboard = NewScoreboard(t.TargetId)
+	t.Scoreboard = NewScoreboard(t.TargetId, t.Timing)
 	scoreboardQuitQuannel := make(chan bool)
 	go t.Scoreboard.Run(scoreboardQuitQuannel)
 
-	t.Wait(t.Timing.StartSteadyState)
+	t.WaitUntil(t.Timing.StartSteadyState)
 
 	for t.Timing.InSteadyState(time.Now().UnixNano()) {
 		// wait until next interval is due
@@ -51,7 +51,7 @@ func (t *Target) RunTimeSeries(c chan bool) {
 
 		runningAgents := len(t.AgentChannel)
 		runningNextAgents := int(loadUnit.NumberOfUsers)
-		//runningNextAgents = 50 // For test purpose
+		runningNextAgents = 120 // For test purpose
 		fmt.Printf("Update amount of agents to %v on target%v\n", runningNextAgents, t.TargetId)
 
 		// update amount of agents for this interval
@@ -64,14 +64,14 @@ func (t *Target) RunTimeSeries(c chan bool) {
 			interruptAgents(t, reduceAgents)
 		}
 
-		t.Wait(loadUnit.IntervalEnd())
+		t.WaitUntil(loadUnit.IntervalEnd())
 	}
 	scoreboardQuitQuannel <- true
 	<-scoreboardQuitQuannel
 	c <- true
 }
 
-func (t *Target) Wait(nextInterval int64) {
+func (t *Target) WaitUntil(nextInterval int64) {
 	currentTime := time.Now().UnixNano()
 	deltaTime := nextInterval - currentTime
 
@@ -83,7 +83,7 @@ func (t *Target) Wait(nextInterval int64) {
 
 func startAgents(t *Target, amount int) {
 	for i := 0; i < amount; i++ {
-		agent := NewAgent(t.Agents.Len()+1, t.TargetId, t.Configuration.TargetIp, make(chan bool), t.Factory.CreateGenerator(), t.Scoreboard.OperationResultChannel, t.Timing)
+		agent := NewAgent(t.Agents.Len()+1, t.TargetId, t.Configuration.TargetIp, make(chan bool), t.Factory.CreateGenerator(), t.Scoreboard.OperationResultChannel, t.Scoreboard.WaitTimeChannel, t.Timing)
 		t.Agents.PushBack(agent)
 		go agent.Run(t.AgentChannel)
 	}
@@ -93,7 +93,7 @@ func interruptAgents(t *Target, amount int) {
 	for i := 0; i < amount; i++ {
 		agentElem := t.Agents.Back()
 		agent := agentElem.Value.(*Agent)
+		agent.Quit <- true
 		t.Agents.Remove(agentElem)
-		go agent.Interrupt(t.AgentChannel)
 	}
 }

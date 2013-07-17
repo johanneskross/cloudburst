@@ -11,34 +11,31 @@ type Agent struct {
 	Quit                   chan bool
 	Generator              Generator
 	OperationResultChannel chan OperationResult
+	WaitTimeChannel        chan WaitTime
 	Timing                 *Timing
 }
 
-func NewAgent(agentId, targetId int, targetIp string, quit chan bool, generator Generator, operationResultChannel chan OperationResult, timing *Timing) *Agent {
-	return &Agent{agentId, targetId, targetIp, quit, generator, operationResultChannel, timing}
+func NewAgent(agentId, targetId int, targetIp string, quit chan bool, generator Generator, operationResultChannel chan OperationResult, waitTimeChannel chan WaitTime, timing *Timing) *Agent {
+	return &Agent{agentId, targetId, targetIp, quit, generator, operationResultChannel, waitTimeChannel, timing}
 }
 
-func (agent *Agent) Run(c chan bool) {
+func (agent *Agent) Run(agentChannel chan bool) {
 	//fmt.Printf("Starting agent #%v ..\n", agent.AgentId)
 
-	c <- true
+	agentChannel <- true
 
 	for {
 		select {
 		case <-agent.Quit:
 			//fmt.Printf("Stopping agent: #%v ..\n", agent.AgentId)
 			close(agent.Quit)
-			<-c
+			<-agentChannel
 			return
 		default:
 			operation := agent.Generator.NextRequest(agent.TargetIp)
 			agent.OperateSync(operation)
 		}
 	}
-}
-
-func (agent *Agent) Interrupt(c chan bool) {
-	agent.Quit <- true
 }
 
 func (agent *Agent) OperateSync(operation Operation) {
@@ -52,15 +49,37 @@ func (agent *Agent) OperateSync(operation Operation) {
 	operationResult.TimeFinished = int64(timeFinished)
 	agent.OperationResultChannel <- operationResult
 
-	agent.Sync()
+	now := time.Now().UnixNano()
+	thinkTime := agent.Generator.GetThinkTime() * TO_NANO
+	waitTime := agent.Sync(now, thinkTime)
+	agent.WaitTimeChannel <- NewWaitTime(now, waitTime, operationResult.OperationName)
 }
 
-func (agent *Agent) Sync() {
-	thinkTime := time.Duration(agent.Generator.GetThinkTime()) * time.Second
-	now := time.Duration(time.Now().Unix()) // in seconds
-	endTime := now + thinkTime
-	deltaTime := endTime - now
-	if deltaTime > 0 {
-		time.Sleep(deltaTime)
+func (agent *Agent) Sync(now, thinkTime int64) int64 {
+	waitTime := thinkTime
+	endTime := now + waitTime
+
+	if endTime > agent.Timing.EndRun {
+
+		if now < agent.Timing.Start {
+			waitTime = agent.Timing.SteadyStateDuration() - now
+			agent.SleepUntil(agent.Timing.StartSteadyState)
+		} else {
+			waitTime = agent.Timing.EndRun - now
+			agent.SleepUntil(agent.Timing.EndRun)
+		}
+
+	} else {
+		agent.SleepUntil(waitTime)
+	}
+
+	return waitTime
+}
+
+func (agent *Agent) SleepUntil(endTime int64) {
+	now := time.Now().UnixNano()
+	duration := endTime - now
+	if duration > 0 {
+		time.Sleep(time.Duration(duration))
 	}
 }
