@@ -20,7 +20,6 @@ func (targetManager *TargetManager) processSchedule(joinChannel chan bool) {
 	targetConfigurations := targetManager.Schedule.TargetConfigurations
 
 	joinTargetChannel := make(chan bool, targetManager.countAllTargets())
-	//	targetManager.Targets = make([]*Target, targetConfigurations.Len())
 
 	startBenchmarkTime := time.Now().UnixNano()
 	// create and start targets

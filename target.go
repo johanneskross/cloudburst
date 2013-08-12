@@ -51,8 +51,8 @@ func (t *Target) RunTimeSeries(c chan bool) {
 
 		runningAgents := len(t.AgentChannel)
 		runningNextAgents := int(loadUnit.NumberOfUsers)
-		runningNextAgents = 120 // For test purpose
-		fmt.Printf("Update amount of agents to %v on target%v\n", runningNextAgents, t.TargetId)
+		//runningNextAgents = 200 // For test purpose
+		fmt.Printf("Update amount of agents from %v to %v on target%v\n", runningAgents, runningNextAgents, t.TargetId)
 
 		// update amount of agents for this interval
 		switch {

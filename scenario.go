@@ -1,6 +1,8 @@
 package cloudburst
 
-import ()
+import (
+	"runtime"
+)
 
 type Scenario struct {
 	TargetManager *TargetManager
@@ -11,6 +13,7 @@ func NewScenario(schedule *TargetSchedule, factory Factory) *Scenario {
 }
 
 func (scenario *Scenario) Launch() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
 	joinChannel := make(chan bool)
 	go scenario.TargetManager.processSchedule(joinChannel)
 	<-joinChannel
