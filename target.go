@@ -66,6 +66,7 @@ func (t *Target) RunTimeSeries(c chan bool) {
 
 		t.WaitUntil(loadUnit.IntervalEnd())
 	}
+	interruptAgents(t, len(t.AgentChannel))
 	scoreboardQuitQuannel <- true
 	<-scoreboardQuitQuannel
 	c <- true
