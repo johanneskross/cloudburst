@@ -7,18 +7,18 @@ type WaitTime struct {
 	OperationName  string
 }
 
-func NewWaitTime(time, waitTime int64, operationName string) WaitTime {
-	return WaitTime{time, waitTime, operationName}
+func NewWaitTime(time, waitTime int64, operationName string) *WaitTime {
+	return &WaitTime{time, waitTime, operationName}
 }
 
 type WaitTimeSummary struct {
 	Count, TotalWaitTime, MinWaitTime, MaxWaitTime int64
 	WaitTimeSampler                                MetricSampler
-	WaitTimeChannel                                chan WaitTime
+	WaitTimeChannel                                chan *WaitTime
 }
 
 func NewWaitTimeSummary(waitTimeSampler MetricSampler) *WaitTimeSummary {
-	return &WaitTimeSummary{0, 0, INT64_MAX_VALUE, INT64_MIN_VALUE, waitTimeSampler, make(chan WaitTime)}
+	return &WaitTimeSummary{0, 0, INT64_MAX_VALUE, INT64_MIN_VALUE, waitTimeSampler, make(chan *WaitTime)}
 }
 
 func (waitTimeSummary *WaitTimeSummary) Run(quit chan bool) {

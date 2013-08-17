@@ -15,12 +15,12 @@ func NewScorecard(targetId int, timeActive int64) *Scorecard {
 	return &Scorecard{targetId, timeActive, 0, 0, operationSummary, operationSummaryMap}
 }
 
-func (scorecard *Scorecard) processLateResult(operationResult OperationResult) {
+func (scorecard *Scorecard) processLateResult(operationResult *OperationResult) {
 	scorecard.TotalOpsInitiated++
 	scorecard.TotalOpsLate++
 }
 
-func (scorecard *Scorecard) processResult(operationResult OperationResult) {
+func (scorecard *Scorecard) processResult(operationResult *OperationResult) {
 	operationSummary, exists := scorecard.operationSummaryMap[operationResult.OperationName]
 	if !exists {
 		operationSummary = NewOperationSummary(NewMetricSamplerPoisson())

@@ -8,13 +8,13 @@ type Scoreboard struct {
 	TotalDropoffs          int64
 	WaitTimeSummaryMap     map[string]*WaitTimeSummary
 	Scorecard              *Scorecard
-	WaitTimeChannel        chan WaitTime
-	OperationResultChannel chan OperationResult
+	WaitTimeChannel        chan *WaitTime
+	OperationResultChannel chan *OperationResult
 }
 
 func NewScoreboard(targetId int, timing *Timing) *Scoreboard {
-	operationResultChannel := make(chan OperationResult)
-	waitTimeChannel := make(chan WaitTime)
+	operationResultChannel := make(chan *OperationResult)
+	waitTimeChannel := make(chan *WaitTime)
 	waitTimeSummaryMap := make(map[string]*WaitTimeSummary)
 	scorecard := NewScorecard(targetId, timing.SteadyStateDuration())
 	return &Scoreboard{targetId, timing, 0, waitTimeSummaryMap, scorecard, waitTimeChannel, operationResultChannel}
@@ -34,7 +34,7 @@ func (scoreboard *Scoreboard) Run(quit chan bool) {
 	}
 }
 
-func (scoreboard *Scoreboard) ModifyOperationResult(operationResult OperationResult) {
+func (scoreboard *Scoreboard) ModifyOperationResult(operationResult *OperationResult) {
 	if scoreboard.Timing.InRampUp(operationResult.TimeStarted) {
 		operationResult.TraceLabel = RAMP_UP_TRACE_LABEL
 	} else if scoreboard.Timing.InSteadyState(operationResult.TimeFinished) {
@@ -59,7 +59,7 @@ func (scoreboard *Scoreboard) ModifyOperationResult(operationResult OperationRes
 
 }
 
-func (scoreboard *Scoreboard) ModifyWaitTime(waitTime WaitTime) {
+func (scoreboard *Scoreboard) ModifyWaitTime(waitTime *WaitTime) {
 	if !scoreboard.Timing.InSteadyState(waitTime.Time) {
 		return
 	}
@@ -74,11 +74,11 @@ func (scoreboard *Scoreboard) ModifyWaitTime(waitTime WaitTime) {
 	waitTimeSummary.WaitTimeChannel <- waitTime
 }
 
-func (scoreboard *Scoreboard) ProcessLateStateResult(operationResult OperationResult) {
+func (scoreboard *Scoreboard) ProcessLateStateResult(operationResult *OperationResult) {
 	scoreboard.Scorecard.processLateResult(operationResult)
 }
 
-func (scoreboard *Scoreboard) ProcessSteadyStateResult(operationResult OperationResult) {
+func (scoreboard *Scoreboard) ProcessSteadyStateResult(operationResult *OperationResult) {
 	scoreboard.Scorecard.processResult(operationResult)
 
 	if !operationResult.Failed {
@@ -86,7 +86,7 @@ func (scoreboard *Scoreboard) ProcessSteadyStateResult(operationResult Operation
 	}
 }
 
-func (scoreboard *Scoreboard) IssueMetricSnapshot(operationResult OperationResult) {
+func (scoreboard *Scoreboard) IssueMetricSnapshot(operationResult *OperationResult) {
 	// write to sonar
 }
 

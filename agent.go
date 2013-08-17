@@ -10,12 +10,12 @@ type Agent struct {
 	TargetIp               string
 	Quit                   chan bool
 	Generator              Generator
-	OperationResultChannel chan OperationResult
-	WaitTimeChannel        chan WaitTime
+	OperationResultChannel chan *OperationResult
+	WaitTimeChannel        chan *WaitTime
 	Timing                 *Timing
 }
 
-func NewAgent(agentId, targetId int, targetIp string, quit chan bool, generator Generator, operationResultChannel chan OperationResult, waitTimeChannel chan WaitTime, timing *Timing) *Agent {
+func NewAgent(agentId, targetId int, targetIp string, quit chan bool, generator Generator, operationResultChannel chan *OperationResult, waitTimeChannel chan *WaitTime, timing *Timing) *Agent {
 	return &Agent{agentId, targetId, targetIp, quit, generator, operationResultChannel, waitTimeChannel, timing}
 }
 

@@ -9,7 +9,7 @@ const RAMP_UP_TRACE_LABEL = "[RAMP-UP]"
 const RAMP_DOWN_TRACE_LABEL = "[RAMP-DOWN]"
 
 type Operation interface {
-	Run(timing *Timing) OperationResult
+	Run(timing *Timing) *OperationResult
 }
 
 type OperationResult struct {

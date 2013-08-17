@@ -37,7 +37,7 @@ func (os *OperationSummary) ResetSamples() {
 	os.ResponseTimeSampler.Reset()
 }
 
-func (os *OperationSummary) processOperationSummary(operationResult OperationResult) {
+func (os *OperationSummary) processOperationSummary(operationResult *OperationResult) {
 	if operationResult.Failed {
 		os.OpsFailed++
 	} else {
