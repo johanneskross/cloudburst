@@ -1,7 +1,7 @@
 package cloudburst
 
 import (
-	//"fmt"
+	//	"fmt"
 	"time"
 )
 
@@ -20,16 +20,13 @@ func NewAgent(agentId, targetId int, targetIp string, quit chan bool, generator 
 }
 
 func (agent *Agent) Run(agentChannel chan bool) {
-	//fmt.Printf("Starting agent #%v ..\n", agent.AgentId)
-
-	agentChannel <- true
-
+	//	fmt.Printf("Starting agent #%v ..\n", agent.AgentId)
 	for {
 		select {
 		case <-agent.Quit:
-			//fmt.Printf("Stopping agent: #%v ..\n", agent.AgentId)
+			//			fmt.Printf("Stopping agent: #%v ..\n", agent.AgentId)
 			close(agent.Quit)
-			<-agentChannel
+			agentChannel <- true
 			return
 		default:
 			operation := agent.Generator.NextRequest(agent.TargetIp)

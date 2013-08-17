@@ -44,12 +44,13 @@ func (t *Target) RunTimeSeries(c chan bool) {
 
 	t.WaitUntil(t.Timing.StartSteadyState)
 
+	i := 0
 	for t.Timing.InSteadyState(time.Now().UnixNano()) {
 		// wait until next interval is due
 		loadUnit := t.LoadManager.NextLoadUnit()
 		loadUnit.Activiate()
 
-		runningAgents := len(t.AgentChannel)
+		runningAgents := t.Agents.Len()
 		runningNextAgents := int(loadUnit.NumberOfUsers)
 		//runningNextAgents = 200 // For test purpose
 		fmt.Printf("Update amount of agents from %v to %v on target%v\n", runningAgents, runningNextAgents, t.TargetId)
@@ -65,8 +66,9 @@ func (t *Target) RunTimeSeries(c chan bool) {
 		}
 
 		t.WaitUntil(loadUnit.IntervalEnd())
+		i++
 	}
-	interruptAgents(t, len(t.AgentChannel))
+	interruptAgents(t, t.Agents.Len())
 	scoreboardQuitQuannel <- true
 	<-scoreboardQuitQuannel
 	c <- true
@@ -84,7 +86,7 @@ func (t *Target) WaitUntil(nextInterval int64) {
 
 func startAgents(t *Target, amount int) {
 	for i := 0; i < amount; i++ {
-		agent := NewAgent(t.Agents.Len()+1, t.TargetId, t.Configuration.TargetIp, make(chan bool), t.Factory.CreateGenerator(), t.Scoreboard.OperationResultChannel, t.Scoreboard.WaitTimeChannel, t.Timing)
+		agent := NewAgent(t.Agents.Len()+1, t.TargetId, t.Configuration.TargetIp, make(chan bool, 1), t.Factory.CreateGenerator(), t.Scoreboard.OperationResultChannel, t.Scoreboard.WaitTimeChannel, t.Timing)
 		t.Agents.PushBack(agent)
 		go agent.Run(t.AgentChannel)
 	}
@@ -96,5 +98,8 @@ func interruptAgents(t *Target, amount int) {
 		agent := agentElem.Value.(*Agent)
 		agent.Quit <- true
 		t.Agents.Remove(agentElem)
+	}
+	for i := 0; i < amount; i++ {
+		<-t.AgentChannel
 	}
 }
