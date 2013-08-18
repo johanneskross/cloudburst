@@ -36,7 +36,7 @@ func NewTarget(targetConfiguration *TargetConfiguration, generator Generator, lo
 }
 
 func (t *Target) RunTimeSeries(c chan bool) {
-	fmt.Printf("Running time series on target: %v\n", t.TargetId)
+	fmt.Printf("Running time series on target %v with ip %v\n", t.TargetId, t.Configuration.TargetIp)
 
 	t.Scoreboard = NewScoreboard(t.TargetId, t.Timing)
 	scoreboardQuitQuannel := make(chan bool)
@@ -62,7 +62,7 @@ func (t *Target) RunTimeSeries(c chan bool) {
 			startAgents(t, addAgents)
 		case runningAgents > runningNextAgents:
 			reduceAgents := runningAgents - runningNextAgents
-			interruptAgents(t, reduceAgents)
+			go interruptAgents(t, reduceAgents)
 		}
 
 		t.WaitUntil(loadUnit.IntervalEnd())
