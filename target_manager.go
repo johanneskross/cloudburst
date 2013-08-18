@@ -7,13 +7,12 @@ import (
 
 type TargetManager struct {
 	Schedule *TargetSchedule
-	Factory  Factory
 	Targets  *list.List
 	TargetId int
 }
 
-func NewTargetManager(schedule *TargetSchedule, factory Factory) *TargetManager {
-	return &TargetManager{schedule, factory, list.New(), 0}
+func NewTargetManager(schedule *TargetSchedule) *TargetManager {
+	return &TargetManager{schedule, list.New(), 0}
 }
 
 func (targetManager *TargetManager) processSchedule(joinChannel chan bool) {
@@ -40,7 +39,7 @@ func (targetManager *TargetManager) createAndStartTarget(targetConfiguration *Ta
 	waitTime := startBenchmarkTime + targetConfiguration.Offset - time.Now().UnixNano()
 	time.Sleep(time.Duration(waitTime))
 
-	targets := targetConfiguration.TargetFactory.CreateTargets(targetConfiguration, targetManager.Factory)
+	targets := targetConfiguration.TargetFactory.CreateTargets(targetConfiguration)
 	for elem := targets.Front(); elem != nil; elem = elem.Next() {
 		target := elem.Value.(*Target)
 

@@ -5,7 +5,6 @@ import (
 )
 
 type TargetFactory interface {
-	Configure()
-	CreateTargets(targetConfiguration *TargetConfiguration, factory Factory) *list.List
+	CreateTargets(targetConfiguration *TargetConfiguration) *list.List
 	CountTargets() int
 }

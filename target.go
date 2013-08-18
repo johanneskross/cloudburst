@@ -14,13 +14,13 @@ type Target struct {
 	Agents        *list.List
 	AgentChannel  chan bool
 	Configuration *TargetConfiguration
-	Factory       Factory
+	Generator     Generator
 	Scoreboard    *Scoreboard
 	Timing        *Timing
 	LoadManager   *load.LoadManager
 }
 
-func NewTarget(targetConfiguration *TargetConfiguration, factory Factory, loadManager *load.LoadManager) *Target {
+func NewTarget(targetConfiguration *TargetConfiguration, generator Generator, loadManager *load.LoadManager) *Target {
 	channelSize := loadManager.LoadSchedule.MaxAgents()
 	channelSize = 200 // For test purpose
 	agentChannel := make(chan bool, channelSize)
@@ -30,7 +30,7 @@ func NewTarget(targetConfiguration *TargetConfiguration, factory Factory, loadMa
 	target.Agents = list.New()
 	target.AgentChannel = agentChannel
 	target.Configuration = targetConfiguration
-	target.Factory = factory
+	target.Generator = generator
 	target.LoadManager = loadManager
 	return target
 }
@@ -86,7 +86,7 @@ func (t *Target) WaitUntil(nextInterval int64) {
 
 func startAgents(t *Target, amount int) {
 	for i := 0; i < amount; i++ {
-		agent := NewAgent(t.Agents.Len()+1, t.TargetId, t.Configuration.TargetIp, make(chan bool, 1), t.Factory.CreateGenerator(), t.Scoreboard.OperationResultChannel, t.Scoreboard.WaitTimeChannel, t.Timing)
+		agent := NewAgent(t.Agents.Len()+1, t.TargetId, t.Configuration.TargetIp, make(chan bool, 1), t.Generator, t.Scoreboard.OperationResultChannel, t.Scoreboard.WaitTimeChannel, t.Timing)
 		t.Agents.PushBack(agent)
 		go agent.Run(t.AgentChannel)
 	}

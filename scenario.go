@@ -8,8 +8,8 @@ type Scenario struct {
 	TargetManager *TargetManager
 }
 
-func NewScenario(schedule *TargetSchedule, factory Factory) *Scenario {
-	return &Scenario{NewTargetManager(schedule, factory)}
+func NewScenario(schedule *TargetSchedule) *Scenario {
+	return &Scenario{NewTargetManager(schedule)}
 }
 
 func (scenario *Scenario) Launch() {
