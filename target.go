@@ -62,13 +62,13 @@ func (t *Target) RunTimeSeries(c chan bool) {
 			startAgents(t, addAgents)
 		case runningAgents > runningNextAgents:
 			reduceAgents := runningAgents - runningNextAgents
-			go interruptAgents(t, reduceAgents)
+			interruptAgents(t, reduceAgents, false)
 		}
 
 		t.WaitUntil(loadUnit.IntervalEnd())
 		i++
 	}
-	interruptAgents(t, t.Agents.Len())
+	interruptAgents(t, t.Agents.Len(), true)
 	scoreboardQuitQuannel <- true
 	<-scoreboardQuitQuannel
 	c <- true
@@ -92,14 +92,16 @@ func startAgents(t *Target, amount int) {
 	}
 }
 
-func interruptAgents(t *Target, amount int) {
+func interruptAgents(t *Target, amount int, waitForInterrupt bool) {
 	for i := 0; i < amount; i++ {
 		agentElem := t.Agents.Back()
 		agent := agentElem.Value.(*Agent)
 		agent.Quit <- true
 		t.Agents.Remove(agentElem)
 	}
-	for i := 0; i < amount; i++ {
-		<-t.AgentChannel
+	if waitForInterrupt {
+		for i := 0; i < amount; i++ {
+			<-t.AgentChannel
+		}
 	}
 }
