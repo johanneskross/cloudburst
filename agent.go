@@ -67,7 +67,7 @@ func (agent *Agent) Sync(now, thinkTime int64) int64 {
 		}
 
 	} else {
-		agent.SleepUntil(waitTime)
+		agent.SleepUntil(endTime)
 	}
 
 	return waitTime
