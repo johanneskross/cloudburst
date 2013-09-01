@@ -20,9 +20,9 @@ type Scoreboard struct {
 	OperationResultChannel chan *s.OperationResult
 }
 
-func NewScoreboard(targetId int, timing *Timing) *Scoreboard {
-	operationResultChannel := make(chan *s.OperationResult)
-	waitTimeChannel := make(chan *s.WaitTime)
+func NewScoreboard(targetId, channelSize int, timing *Timing) *Scoreboard {
+	operationResultChannel := make(chan *s.OperationResult, channelSize)
+	waitTimeChannel := make(chan *s.WaitTime, channelSize)
 	waitTimeSummaryMap := make(map[string]*s.WaitTimeSummary)
 	scorecard := s.NewScorecard(targetId, timing.SteadyStateDuration())
 	return &Scoreboard{targetId, timing, 0, waitTimeSummaryMap, scorecard, waitTimeChannel, operationResultChannel}

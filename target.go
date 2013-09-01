@@ -106,7 +106,7 @@ func (t *Target) interruptAgents(amount int, waitForInterrupt bool) {
 }
 
 func (t *Target) createAndStartScoreboard() {
-	t.Scoreboard = NewScoreboard(t.TargetId, t.Timing)
+	t.Scoreboard = NewScoreboard(t.TargetId, cap(t.AgentChannel), t.Timing)
 	t.ScoreboardJoinChannel = make(chan bool)
 	go t.Scoreboard.Run(t.ScoreboardJoinChannel)
 }
