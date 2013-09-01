@@ -1,4 +1,4 @@
-package cloudburst
+package scoreboard
 
 import (
 	"container/list"

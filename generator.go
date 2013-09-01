@@ -3,7 +3,6 @@ package cloudburst
 import ()
 
 type Generator interface {
-	GetThinkTime() int64
-	GetCycleTime() int64
+	GetWaitTime() int64
 	NextRequest(url string) Operation
 }

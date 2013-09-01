@@ -1,4 +1,4 @@
-package cloudburst
+package scoreboard
 
 import ()
 
@@ -73,19 +73,4 @@ func (waitTimeSummary *WaitTimeSummary) GetStatistics() WaitTimeSummaryStatistic
 	stats.TvalueAverageWaitTime = tvalue
 
 	return stats
-}
-
-type WaitTimeSummaryStatistics struct {
-	OperationName           string  `json:"operation_name"`
-	AverageWaitTime         float64 `json:"average_wait_time"`
-	TotalWaitTime           int64   `json:"total_wait_time"`
-	MinWaitTime             int64   `json:"min_wait_time"`
-	MaxWaitTime             int64   `json:"max_wait_time"`
-	PercentileWaitTime90th  int64   `json:"90th_percentile_wait_time"`
-	PercentileWaitTime99th  int64   `json:"99th_percentile_wait_time"`
-	SamplesCollected        int     `json:"samples_collected"`
-	SamplesSeen             int     `json:"samples_seen"`
-	SampleMean              float64 `json:"sample_mean"`
-	SampleStandardDeviation float64 `json:"sample_standard_deviation"`
-	TvalueAverageWaitTime   float64 `json:"tvalue_average_wait_time"`
 }

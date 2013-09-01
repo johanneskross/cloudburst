@@ -1,12 +1,12 @@
-package cloudburst
+package scoreboard
 
 import ()
 
 type Scorecard struct {
 	TargetId                                          int
 	IntervalDuration, TotalOpsInitiated, TotalOpsLate int64
-	operationSummary                                  *OperationSummary
-	operationSummaryMap                               map[string]*OperationSummary
+	OperationSummary                                  *OperationSummary
+	OperationSummaryMap                               map[string]*OperationSummary
 }
 
 func NewScorecard(targetId int, timeActive int64) *Scorecard {
@@ -15,36 +15,36 @@ func NewScorecard(targetId int, timeActive int64) *Scorecard {
 	return &Scorecard{targetId, timeActive, 0, 0, operationSummary, operationSummaryMap}
 }
 
-func (scorecard *Scorecard) processLateResult(operationResult *OperationResult) {
+func (scorecard *Scorecard) ProcessLateResult(operationResult *OperationResult) {
 	scorecard.TotalOpsInitiated++
 	scorecard.TotalOpsLate++
 }
 
-func (scorecard *Scorecard) processResult(operationResult *OperationResult) {
-	operationSummary, exists := scorecard.operationSummaryMap[operationResult.OperationName]
+func (scorecard *Scorecard) ProcessResult(operationResult *OperationResult) {
+	operationSummary, exists := scorecard.OperationSummaryMap[operationResult.OperationName]
 	if !exists {
 		operationSummary = NewOperationSummary(NewMetricSamplerPoisson())
-		scorecard.operationSummaryMap[operationResult.OperationName] = operationSummary
+		scorecard.OperationSummaryMap[operationResult.OperationName] = operationSummary
 	}
 	operationSummary.processOperationSummary(operationResult)
-	scorecard.operationSummary.processOperationSummary(operationResult)
+	scorecard.OperationSummary.processOperationSummary(operationResult)
 	scorecard.TotalOpsInitiated++
 }
 
-func (scorecard *Scorecard) merge(source *Scorecard) {
+func (scorecard *Scorecard) Merge(source *Scorecard) {
 	scorecard.TotalOpsInitiated += source.TotalOpsInitiated
 	scorecard.TotalOpsLate += source.TotalOpsLate
-	scorecard.operationSummary.Merge(source.operationSummary)
+	scorecard.OperationSummary.Merge(source.OperationSummary)
 
-	for operationName, sourceOperationSummary := range source.operationSummaryMap {
+	for operationName, sourceOperationSummary := range source.OperationSummaryMap {
 
-		operationSummary, exists := scorecard.operationSummaryMap[operationName]
+		operationSummary, exists := scorecard.OperationSummaryMap[operationName]
 		if !exists {
 			operationSummary = NewOperationSummary(NewMetricSamplerAll())
 		}
 
 		operationSummary.Merge(sourceOperationSummary)
-		scorecard.operationSummaryMap[operationName] = operationSummary
+		scorecard.OperationSummaryMap[operationName] = operationSummary
 	}
 }
 
@@ -60,7 +60,7 @@ func (scorecard *Scorecard) GetScorecardStatistics(duration int64) ScorecardStat
 	stats.TotalOpsInitiated = scorecard.TotalOpsInitiated
 	stats.TotalOpsLate = scorecard.TotalOpsLate
 	stats.OfferedLoadOps = offeredLoadOps
-	stats.Summary = scorecard.operationSummary.GetOperationSummaryStatistics(duration)
+	stats.Summary = scorecard.OperationSummary.GetOperationSummaryStatistics(duration)
 	stats.Operational = scorecard.GetScorecardOperationStatistics(duration)
 
 	return stats
@@ -69,23 +69,8 @@ func (scorecard *Scorecard) GetScorecardStatistics(duration int64) ScorecardStat
 func (scorecard *Scorecard) GetScorecardOperationStatistics(duration int64) ScorecardOperationStatistics {
 	stats := ScorecardOperationStatistics{}
 	stats.Operations = make(map[string]OperationSummaryStatistics)
-	for operationName, operationSummary := range scorecard.operationSummaryMap {
+	for operationName, operationSummary := range scorecard.OperationSummaryMap {
 		stats.Operations[operationName] = operationSummary.GetOperationSummaryStatistics(duration)
 	}
 	return stats
-}
-
-type ScorecardStatistics struct {
-	// aggreation_identifier
-	RunDuration       int64                        `json:"run_duration"`
-	IntervalDuration  int64                        `json:"interval_duration"`
-	TotalOpsInitiated int64                        `json:"total_ops_initiated"`
-	TotalOpsLate      int64                        `json:"total_ops_late"`
-	OfferedLoadOps    float64                      `json:"offered_load_ops"`
-	Summary           OperationSummaryStatistics   `json:"summary"`
-	Operational       ScorecardOperationStatistics `json:"operational"`
-}
-
-type ScorecardOperationStatistics struct {
-	Operations map[string]OperationSummaryStatistics `json:"operations"`
 }

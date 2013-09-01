@@ -1,9 +1,10 @@
-package cloudburst
+package scoreboard
 
 import (
 	"math"
 )
 
+const TO_NANO = 1000000000
 const INT64_MAX_VALUE = 9223372036854775807
 const INT64_MIN_VALUE = -9223372036854775808
 const RTIME_T = 3000000000
@@ -51,8 +52,6 @@ func (os *OperationSummary) processOperationSummary(operationResult *OperationRe
 		if responseTime > RTIME_T {
 			os.OpsFailedRtimeThreshold++
 		}
-
-		// TODO psquared
 
 		if os.MaxResponseTime < responseTime {
 			os.MaxResponseTime = responseTime
@@ -134,31 +133,4 @@ func (operationSummary *OperationSummary) nNaN(value float64) float64 {
 		return 0
 	}
 	return value
-}
-
-type OperationSummaryStatistics struct {
-	OpsSuccessful     int64 `json:"ops_successful"`
-	OpsFailed         int64 `json:"ops_failed"`
-	OpsSeen           int64 `json:"ops_seen"`
-	ActionsSuccessful int64 `json:"actions_successful"`
-	Ops               int64 `json:"ops"`
-
-	EffectiveLoadOps float64 `json:"effective_load_ops"`
-	EffectiveLoadReq float64 `json:"effective_load_req"`
-
-	RtimeTotal     int64   `json:"rtime_total"`
-	RtimeThrFailed int64   `json:"rtime_thr_failed"`
-	RtimeAverage   float64 `json:"rtime_average"`
-	RtimeMax       int64   `json:"rtime_max"`
-	RtimeMin       int64   `json:"rtime_min"`
-
-	SamplerSamplesCollected int     `json:"sampler_samples_collected`
-	SamplerSamplesSeen      int     `json:"sampler_samples_seen"`
-	SamplerRtime50th        float64 `json:"sampler_rtime_50th"`
-	SamplerRtime90th        float64 `json:"sampler_rtime_90th"`
-	SamplerRtime95th        float64 `json:"sampler_rtime_95th"`
-	SamplerRtime99th        float64 `json:"sampler_rtime_99th"`
-	SamplerRtimeMean        float64 `json:"sampler_rtime_mean"`
-	SamplerRtimeStdev       float64 `json:"sampler_rtime_stdev"`
-	SamplerRtimeTvalue      float64 `json:"sampler_rtime_tvalue"`
 }
