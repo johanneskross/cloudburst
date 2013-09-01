@@ -12,11 +12,14 @@ const MEAN_SAMPLING_INTERVAL = 30
 type MetricSamplerPoisson struct {
 	Sampling                        MetricSamplerAll
 	NextSampleToAccept, SamplesSeen int
+	RandGenerator                   *rand.Rand
 }
 
 func NewMetricSamplerPoisson() *MetricSamplerPoisson {
 	metricSamplerPoisson := &MetricSamplerPoisson{}
 	metricSamplerPoisson.Reset()
+	randSource := rand.NewSource(time.Now().UnixNano())
+	metricSamplerPoisson.RandGenerator = rand.New(randSource)
 	return metricSamplerPoisson
 }
 
@@ -39,8 +42,7 @@ func (metricSamplerPoisson *MetricSamplerPoisson) Accept(observation int64) bool
 
 	if metricSamplerPoisson.SamplesSeen == metricSamplerPoisson.NextSampleToAccept {
 		metricSamplerPoisson.Sampling.Accept(observation)
-		rand.Seed(time.Now().UTC().UnixNano())
-		randDouble := rand.Float64()
+		randDouble := metricSamplerPoisson.RandGenerator.Float64()
 		randExp := -1 * MEAN_SAMPLING_INTERVAL * math.Log(randDouble)
 		metricSamplerPoisson.NextSampleToAccept = metricSamplerPoisson.SamplesSeen * int(math.Ceil(randExp))
 
