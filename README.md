@@ -11,15 +11,15 @@ Cloudburst is an efficient workload generation toolkit for cloud environments de
 
 * A Scenario represents a concrete experiment and coordinates it.
 
-* A Target Schedule specifies the overall experiment settings and contains one or more Target Configurations.
+* A Target Schedule specifies the experiment settings and contains one or more Target Configurations.
 
 * A Target Configuration represents a configuration for one target.
 
-* A Target Manager is responsible for directing targets. It uses the Target Schedule and a Target Factory to create Targets.
+* A Target Manager uses the Target Schedule and a Target Factory to create Targets.
 
 * A Target exists for each target server on which workload will be created. It uses a Load Manager to schedule the amount and duration of Agents.
 
-* A Load Manager maintains a workload distribution, which is a time series of the amount of Agents divided into several time intervals. 
+* A Load Manager maintains a workload distribution.
 
 * An Agent embodies an user and executes operations on an target server. It receives a Generator implementation of its parent Target which comprises a method to request an Operation. An Operation again comprises a run-method that is then executed by the Agent. 
 
