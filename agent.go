@@ -1,7 +1,6 @@
 package cloudburst
 
 import (
-	//"fmt"
 	"github.com/johanneskross/cloudburst/scoreboard"
 	"time"
 )
@@ -16,20 +15,16 @@ type Agent struct {
 	Timing                 *Timing
 }
 
-func NewAgent(agentId, targetId int, targetIp string, agentJoinChannel chan bool, generator Generator, operationResultChannel chan *scoreboard.OperationResult, waitTimeChannel chan *scoreboard.WaitTime, timing *Timing) *Agent {
-	return &Agent{agentId, targetId, targetIp, agentJoinChannel, generator, operationResultChannel, waitTimeChannel, timing}
-}
-
 func (agent *Agent) Run(agentChannel chan bool) {
-	//	fmt.Printf("Starting agent #%v ..\n", agent.AgentId)
 	for {
 		select {
 		case <-agent.AgentJoinChannel:
-			// fmt.Printf("Stopping agent: #%v ..\n", agent.AgentId)
+			// quit agent and signal it
 			close(agent.AgentJoinChannel)
 			agentChannel <- true
 			return
 		default:
+			// by default agent executes operations
 			operation := agent.Generator.NextRequest(agent.TargetIp)
 			agent.OperateSync(operation)
 		}
@@ -58,6 +53,7 @@ func (agent *Agent) OperateSync(operation Operation) {
 
 func (agent *Agent) Sync(startTime, waitTime int64) int64 {
 	endTime := startTime + waitTime
+
 	if endTime > agent.Timing.EndRun {
 		if startTime < agent.Timing.Start {
 			waitTime = agent.Timing.SteadyStateDuration() - startTime

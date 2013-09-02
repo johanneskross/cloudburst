@@ -14,9 +14,9 @@ func NewTargetSchedule() *TargetSchedule {
 }
 
 func (targetSchedule *TargetSchedule) AddTargetConfiguration(targetConfiguration *TargetConfiguration) {
-	finishTime := targetConfiguration.Offset + targetConfiguration.RampUp + targetConfiguration.Duration + targetConfiguration.RampDown
-	if finishTime > targetSchedule.Duration {
-		targetSchedule.Duration = finishTime
+	duration := targetConfiguration.Offset + targetConfiguration.RampUp + targetConfiguration.Duration + targetConfiguration.RampDown
+	if duration > targetSchedule.Duration {
+		targetSchedule.Duration = duration
 	}
 
 	if targetSchedule.TargetConfigurations == nil {

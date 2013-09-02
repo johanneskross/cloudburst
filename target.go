@@ -38,7 +38,9 @@ func (t *Target) GenerateLoad(targetJoinChannel chan bool) {
 	// wait for start
 	t.WaitUntil(t.Timing.StartSteadyState)
 
-	fmt.Printf("Running time series on target %v with ip %v\n", t.TargetId, t.Configuration.TargetIp)
+	fmt.Printf("Running time series on target %v with ip %v\n",
+		t.TargetId, t.Configuration.TargetIp)
+
 	interval := 0
 	for t.Timing.InSteadyState(time.Now().UnixNano()) {
 		// get load unit
@@ -60,7 +62,8 @@ func (t *Target) updateAmountOfAgents(loadUnit *load.LoadUnit, interval int) {
 	runningAgents := t.Agents.Len()
 	runningNextAgents := int(loadUnit.NumberOfUsers)
 
-	fmt.Printf("Update amount of agents from %v to %v on target%v in interval %v\n", runningAgents, runningNextAgents, t.TargetId, interval)
+	fmt.Printf("Update amount of agents from %v to %v on target%v in interval %v\n",
+		runningAgents, runningNextAgents, t.TargetId, interval)
 
 	// update amount of agents for this interval
 	switch {
@@ -78,14 +81,24 @@ func (t *Target) WaitUntil(nextInterval int64) {
 	deltaTime := nextInterval - currentTime
 
 	if deltaTime > 0 {
-		fmt.Printf("Target %v waits %v seconds for next interval\n", t.TargetId, deltaTime/TO_NANO)
+		fmt.Printf("Target %v waits %v seconds for next interval\n",
+			t.TargetId, deltaTime/TO_NANO)
 		time.Sleep(time.Duration(deltaTime))
 	}
 }
 
 func (t *Target) startAgents(amount int) {
 	for i := 0; i < amount; i++ {
-		agent := NewAgent(t.Agents.Len()+1, t.TargetId, t.Configuration.TargetIp, make(chan bool, 1), t.Generator, t.Scoreboard.OperationResultChannel, t.Scoreboard.WaitTimeChannel, t.Timing)
+		agent := &Agent{}
+		agent.AgentId = t.Agents.Len() + 1
+		agent.TargetId = t.TargetId
+		agent.TargetIp = t.Configuration.TargetIp
+		agent.AgentJoinChannel = make(chan bool, 1)
+		agent.Generator = t.Generator
+		agent.OperationResultChannel = t.Scoreboard.OperationResultChannel
+		agent.WaitTimeChannel = t.Scoreboard.WaitTimeChannel
+		agent.Timing = t.Timing
+
 		t.Agents.PushBack(agent)
 		go agent.Run(t.AgentChannel)
 	}

@@ -1,6 +1,6 @@
 package cloudburst
 
-import "fmt"
+import ()
 
 type Benchmark struct {
 }
@@ -9,15 +9,13 @@ func NewBenchmark() *Benchmark {
 	return &Benchmark{}
 }
 
-func (benchmark *Benchmark) Start(targetSchedule *TargetSchedule) {
+func (benchmark *Benchmark) Start(targetSchedule *TargetSchedule) map[string][]byte {
 	// create scenario
 	scenario := NewScenario(targetSchedule)
 
 	// launch scenario
-	fmt.Println("Launch Scenario")
 	scenario.Launch()
 
 	// aggregateStatistics
-	scenario.AggregateStatistics()
-	fmt.Println("End Scenario")
+	return scenario.AggregateStatistics()
 }

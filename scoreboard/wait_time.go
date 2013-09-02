@@ -21,24 +21,17 @@ func NewWaitTimeSummary(waitTimeSampler MetricSampler) *WaitTimeSummary {
 	return &WaitTimeSummary{0, 0, INT64_MAX_VALUE, INT64_MIN_VALUE, waitTimeSampler, make(chan *WaitTime)}
 }
 
-func (waitTimeSummary *WaitTimeSummary) Run(quit chan bool) {
-	for {
-		select {
-		case waitTime := <-waitTimeSummary.WaitTimeChannel:
-			waitTimeSummary.Count++
-			waitTimeSummary.TotalWaitTime += waitTime.WaitTime
-			if waitTime.WaitTime > waitTimeSummary.MaxWaitTime {
-				waitTimeSummary.MaxWaitTime = waitTime.WaitTime
-			}
-			if waitTime.WaitTime < waitTimeSummary.MinWaitTime {
-				waitTimeSummary.MinWaitTime = waitTime.WaitTime
-			}
-			waitTimeSummary.WaitTimeSampler.Accept(waitTime.WaitTime)
-		case <-quit:
-			quit <- true
-			return
-		}
+func (waitTimeSummary *WaitTimeSummary) Receive(waitTime int64) {
+	waitTimeSummary.Count++
+	waitTimeSummary.TotalWaitTime += waitTime
+	if waitTime > waitTimeSummary.MaxWaitTime {
+		waitTimeSummary.MaxWaitTime = waitTime
 	}
+	if waitTime < waitTimeSummary.MinWaitTime {
+		waitTimeSummary.MinWaitTime = waitTime
+	}
+	waitTimeSummary.WaitTimeSampler.Accept(waitTime)
+
 }
 
 func (waitTimeSummary *WaitTimeSummary) GetStatistics() WaitTimeSummaryStatistics {

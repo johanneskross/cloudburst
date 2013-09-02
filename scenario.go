@@ -3,7 +3,6 @@ package cloudburst
 import (
 	"encoding/json"
 	s "github.com/johanneskross/cloudburst/scoreboard"
-	"io/ioutil"
 	"runtime"
 	"strconv"
 )
@@ -18,17 +17,20 @@ func NewScenario(targetSchedule *TargetSchedule) *Scenario {
 }
 
 func (scenario *Scenario) Launch() {
-	// Use all available cpu cores
+	// use all available cpu cores
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
+	// start target manager
 	targetManagerJoinChannel := make(chan bool)
 	go scenario.TargetManager.processSchedule(targetManagerJoinChannel)
 	<-targetManagerJoinChannel
 }
 
-func (scenario *Scenario) AggregateStatistics() {
+func (scenario *Scenario) AggregateStatistics() map[string][]byte {
+	results := make(map[string][]byte)
 	globalScorecard := s.NewScorecard(-1, scenario.TargetSchedule.Duration)
 
+	// get scoreboard for each target
 	for elem := scenario.TargetManager.Targets.Front(); elem != nil; elem = elem.Next() {
 		target := elem.Value.(*Target)
 		scoreboard := target.Scoreboard
@@ -37,14 +39,18 @@ func (scenario *Scenario) AggregateStatistics() {
 
 		stats, err := json.Marshal(scoreboard.GetScorboardStatistics())
 		if err == nil {
-			filename := "target" + strconv.Itoa(target.TargetId) + ".json"
-			ioutil.WriteFile(filename, stats, 0644)
+			description := "target" + strconv.Itoa(target.TargetId)
+			results[description] = stats
 		}
 	}
 
-	stats, err := json.Marshal(globalScorecard.GetScorecardStatistics(scenario.TargetSchedule.Duration))
+	// get global scoreboard for all targets
+	stats, err := json.Marshal(globalScorecard.GetScorecardStatistics(
+		scenario.TargetSchedule.Duration))
 	if err == nil {
-		filename := "summary.json"
-		ioutil.WriteFile(filename, stats, 0644)
+		description := "summary"
+		results[description] = stats
 	}
+
+	return results
 }

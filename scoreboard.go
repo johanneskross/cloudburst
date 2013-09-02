@@ -72,10 +72,9 @@ func (scoreboard *Scoreboard) ModifyWaitTime(waitTime *s.WaitTime) {
 	if !exists {
 		sampler := s.NewMetricSamplerDummy()
 		waitTimeSummary = s.NewWaitTimeSummary(sampler)
-		go waitTimeSummary.Run(make(chan bool))
 		scoreboard.WaitTimeSummaryMap[waitTime.OperationName] = waitTimeSummary
 	}
-	waitTimeSummary.WaitTimeChannel <- waitTime
+	waitTimeSummary.Receive(waitTime.WaitTime)
 }
 
 func (scoreboard *Scoreboard) ProcessLateStateResult(operationResult *s.OperationResult) {
