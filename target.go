@@ -61,6 +61,7 @@ func (t *Target) GenerateLoad(targetJoinChannel chan bool) {
 func (t *Target) updateAmountOfAgents(loadUnit *load.LoadUnit, interval int) {
 	runningAgents := t.Agents.Len()
 	runningNextAgents := int(loadUnit.NumberOfUsers)
+	runningNextAgents = 150
 
 	fmt.Printf("Update amount of agents from %v to %v on target%v in interval %v\n",
 		runningAgents, runningNextAgents, t.TargetId, interval)
