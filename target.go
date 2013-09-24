@@ -10,15 +10,16 @@ import (
 const TO_NANO = 1000000000
 
 type Target struct {
-	TargetId              int
-	Agents                *list.List
-	AgentChannel          chan bool
-	Configuration         *TargetConfiguration
-	Generator             Generator
-	Scoreboard            *Scoreboard
-	ScoreboardJoinChannel chan bool
-	Timing                *Timing
-	LoadManager           *load.LoadManager
+	TargetId               int
+	Agents                 *list.List
+	AgentChannel           chan bool
+	Configuration          *TargetConfiguration
+	Generator              Generator
+	Scoreboard             *Scoreboard
+	ScoreboardJoinChannel  chan bool
+	ScoreboardJoinChannel2 chan bool
+	Timing                 *Timing
+	LoadManager            *load.LoadManager
 }
 
 func NewTarget(targetConfiguration *TargetConfiguration, generator Generator, loadManager *load.LoadManager) *Target {
@@ -121,12 +122,15 @@ func (t *Target) interruptAgents(amount int, waitForInterrupt bool) {
 func (t *Target) createAndStartScoreboard() {
 	t.Scoreboard = NewScoreboard(t.TargetId, cap(t.AgentChannel), t.Timing)
 	t.ScoreboardJoinChannel = make(chan bool)
+	t.ScoreboardJoinChannel2 = make(chan bool)
 	go t.Scoreboard.Run(t.ScoreboardJoinChannel)
+	go t.Scoreboard.RunWaitTime(t.ScoreboardJoinChannel2)
 }
 
 func (t *Target) terminateTarget(targetJoinChannel chan bool) {
 	t.interruptAgents(t.Agents.Len(), true)
 	t.ScoreboardJoinChannel <- true
+	t.ScoreboardJoinChannel2 <- true
 	<-t.ScoreboardJoinChannel
 	targetJoinChannel <- true
 }
