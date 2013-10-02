@@ -33,20 +33,10 @@ func (scoreboard *Scoreboard) Run(scoreboardJoinChannel chan bool) {
 		select {
 		case operationResult := <-scoreboard.OperationResultChannel:
 			scoreboard.ModifyOperationResult(operationResult)
-		case <-scoreboardJoinChannel:
-			scoreboardJoinChannel <- true
-			return
-		}
-	}
-}
-
-func (scoreboard *Scoreboard) RunWaitTime(scoreboardJoinChannel2 chan bool) {
-	for {
-		select {
 		case waitTime := <-scoreboard.WaitTimeChannel:
 			scoreboard.ModifyWaitTime(waitTime)
-		case <-scoreboardJoinChannel2:
-			scoreboardJoinChannel2 <- true
+		case <-scoreboardJoinChannel:
+			scoreboardJoinChannel <- true
 			return
 		}
 	}
