@@ -1,33 +1,23 @@
 package load
 
-import (
-	"container/list"
-)
+import ()
 
 type LoadSchedule struct {
-	LoadUnits *list.List
+	LoadUnits map[int]*LoadUnit
 }
 
 func (loadSchedule *LoadSchedule) GetLoadUnit(index int) *LoadUnit {
-	i := 0
-	for elem := loadSchedule.LoadUnits.Front(); elem != nil; elem = elem.Next() {
-		if i == index {
-			return elem.Value.(*LoadUnit)
-		}
-		i++
-	}
-	return loadSchedule.LoadUnits.Front().Value.(*LoadUnit)
+	return loadSchedule.LoadUnits[index]
 }
 
 func (loadSchedule *LoadSchedule) Size() int {
-	return loadSchedule.LoadUnits.Len()
+	return len(loadSchedule.LoadUnits)
 }
 
 func (loadSchedule *LoadSchedule) MaxAgents() int {
 	loadUnits := loadSchedule.LoadUnits
 	max := int64(0)
-	for elem := loadUnits.Front(); elem != nil; elem = elem.Next() {
-		loadUnit := elem.Value.(*LoadUnit)
+	for _, loadUnit := range loadUnits {
 		if loadUnit.NumberOfUsers > max {
 			max = loadUnit.NumberOfUsers
 		}
@@ -35,6 +25,6 @@ func (loadSchedule *LoadSchedule) MaxAgents() int {
 	return int(max)
 }
 
-func NewLoadSchedule(loadUnits *list.List) *LoadSchedule {
+func NewLoadSchedule(loadUnits map[int]*LoadUnit) *LoadSchedule {
 	return &LoadSchedule{loadUnits}
 }
